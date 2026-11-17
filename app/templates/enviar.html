@@ -1,0 +1,64 @@
+<!-- fragmento: miolo do painel "Enviar mensagem" (estilo Papel); embrulhado por app/paginas/enviar.py. -->
+<style>
+.env-form fieldset { border: 0; padding: 0; margin: 0; min-width: 0; }
+.env-form fieldset[disabled] { opacity: .55; }
+.env-form .acoes { justify-content: flex-start; }
+#resultado:empty { display: none; }
+#resultado.ruim { color: var(--destrutivo); }
+.env-aviso:not(:empty) { margin-bottom: 14px; }
+</style>
+<div class="miolo">
+<div class="env-aviso">$aviso_config</div>
+<form id="f" class="env-form">
+  <fieldset id="campos" class="form-coluna" $desabilitado>
+  <div><label class="campo-rotulo" for="token">Token de envio</label><input id="token" class="campo" type="password" autocomplete="off" required></div>
+  <div><label class="campo-rotulo" for="para">Para (55DDNNNNNNNNN)</label><input id="para" class="campo" inputmode="numeric" pattern="55[0-9]{11}" required placeholder="5592900000000"></div>
+  <div><label class="campo-rotulo" for="texto">Texto</label><textarea id="texto" class="campo" maxlength="$limite" required></textarea></div>
+  <div class="acoes"><button type="submit" class="btn primario" id="enviar">Enviar</button><span id="resultado" role="status" class="meta-linha"></span></div>
+  </fieldset>
+</form>
+</div>
+<script>
+(function () {
+  var f = document.getElementById('f');
+  var out = document.getElementById('resultado');
+  var btn = document.getElementById('enviar');
+  var travado = false;
+  function dizer(t, ruim) { out.textContent = t || ''; out.className = 'meta-linha' + (ruim ? ' ruim' : ''); }
+  function lerJson(r) {
+    var tipo = r.headers.get('content-type') || '';
+    if (tipo.indexOf('application/json') === -1) { return Promise.resolve({}); }
+    return r.json().catch(function () { return {}; });
+  }
+  f.addEventListener('submit', function (ev) {
+    ev.preventDefault();
+    if (travado) { return; }
+    btn.disabled = true;
+    dizer('Enviando…');
+    var token = document.getElementById('token').value;
+    fetch('/enviar', {
+      method: 'POST', credentials: 'same-origin',
+      headers: { 'Content-Type': 'application/json', 'X-Vigia-Envio': token },
+      body: JSON.stringify({ para: document.getElementById('para').value, texto: document.getElementById('texto').value })
+    }).then(function (r) { return lerJson(r).then(function (d) { return { s: r.status, ok: r.ok, d: d }; }); })
+      .then(function (x) {
+        document.getElementById('token').value = '';
+        if (x.s === 200 && x.ok) {
+          dizer('');
+          window.vigiaToast('Enviada.');
+          document.getElementById('texto').value = '';
+        } else if (x.s === 202) {
+          /* incerto: pode ter saído. Texto limpo e botão travado até recarregar, para não duplicar. */
+          travado = true;
+          document.getElementById('texto').value = '';
+          dizer((x.d && x.d.mensagem) || 'A mensagem pode ter sido enviada. Confira no celular.', true);
+          return;
+        } else {
+          dizer((x.d && x.d.mensagem) || ('Falhou (' + x.s + ').'), true);
+        }
+        btn.disabled = false;
+      })
+      .catch(function () { dizer('Falha de rede local. Confira no celular antes de tentar de novo.', true); btn.disabled = false; });
+  });
+})();
+</script>

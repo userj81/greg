@@ -1,0 +1,4 @@
+#!/bin/bash
+# Hook versionado do Vigia (ativado por: git config core.hooksPath .githooks).
+# Roda bin/ci.sh --pre-commit: compila, gitleaks no staged, compose e a suíte inteira. Commit só com VERDE.
+exec "$(git rev-parse --show-toplevel)/bin/ci.sh" --pre-commit

@@ -1,0 +1,38 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<!-- Modelo: /REPO_RAIZ e /REPO_HOME são substituídos por bin/instalar-launchagent.sh. Sem segredo: o .env é lido pelos scripts. -->
+<plist version="1.0">
+<dict>
+	<key>Label</key>
+	<string>io.vigia.vigia-semanal-limpeza</string>
+	<key>ProgramArguments</key>
+	<array>
+		<string>/bin/bash</string>
+		<string>/REPO_RAIZ/bin/vigia.sh</string>
+		<string>semanal</string>
+		<string>--executar-limpeza</string>
+	</array>
+	<key>WorkingDirectory</key>
+	<string>/REPO_RAIZ</string>
+	<key>EnvironmentVariables</key>
+	<dict>
+		<key>PATH</key>
+		<string>/opt/homebrew/bin:/REPO_HOME/.local/bin:/usr/local/bin:/usr/bin:/bin:/usr/sbin:/sbin</string>
+		<key>PYTHONPATH</key>
+		<string>/REPO_RAIZ</string>
+	</dict>
+	<key>StartCalendarInterval</key>
+	<dict>
+		<key>Hour</key>
+		<integer>20</integer>
+		<key>Minute</key>
+		<integer>35</integer>
+	</dict>
+	<key>ProcessType</key>
+	<string>Background</string>
+	<key>StandardOutPath</key>
+	<string>/REPO_HOME/Library/Logs/vigia-semanal-limpeza.out.log</string>
+	<key>StandardErrorPath</key>
+	<string>/REPO_HOME/Library/Logs/vigia-semanal-limpeza.err.log</string>
+</dict>
+</plist>

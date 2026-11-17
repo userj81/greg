@@ -1,0 +1,92 @@
+<!-- fragmento: corpo do painel Conexão (estilo Papel); embrulhado por app/paginas/conexao.py -->
+<div class="miolo cx" id="qr" data-estado="$estado_cru" data-ttl="$ttl" data-segundos="$qr_segundos" data-teto="$teto" data-max="$qr_max">
+  <div class="cx-avisos">$avisos</div>
+  <p class="rotulo">Estado</p>
+  $kv
+  <p class="rotulo">Parear</p>
+  <p class="texto-2">$parear</p>
+  <div id="qr-area" class="qr-area"$qr_visivel>
+    <img id="qr-img" alt="QR Code do WhatsApp" width="240" height="240" src="$qr_src">
+    <p id="qr-msg" class="alerta" role="status">$qr_mensagem</p>
+    <span id="restantes" hidden>$restantes</span>
+  </div>
+</div>
+<style>
+.cx .cx-avisos:not(:empty) { display: flex; flex-direction: column; gap: 8px; margin-bottom: 16px; }
+.cx .texto-2 { max-width: 520px; }
+.qr-area { margin-top: 14px; display: flex; flex-direction: column; align-items: flex-start; gap: 6px; }
+.qr-area img { width: 240px; height: 240px; border-radius: var(--raio-grupo); background: var(--qr-fundo); box-shadow: 0 0 0 .5px var(--grupo-borda); }
+#qr-msg { font: var(--t-meta) var(--fonte); color: var(--meta); }
+#qr-msg.ruim { color: var(--destrutivo); }
+</style>
+<script>
+(function () {
+  var raiz = document.getElementById('qr');
+  var estado = raiz.dataset.estado;
+  var teto = parseInt(raiz.dataset.teto, 10) || 10;
+  var maximo = parseInt(raiz.dataset.max, 10) || 3;
+  var ttl = parseInt(raiz.dataset.ttl, 10) || 0;
+  var img = document.getElementById('qr-img');
+  var area = document.getElementById('qr-area');
+  var msg = document.getElementById('qr-msg');
+  var contador = document.getElementById('qrs-hoje');
+  var restantesEl = document.getElementById('restantes');
+  var restantes = parseInt(restantesEl.textContent, 10) || 0;
+  var falhas = 0;
+  var saiu = false;
+  function ativo() { return estado === 'gerando' || estado === 'renovando'; }
+  function sair(extra) { if (!saiu) { saiu = true; location.replace('/conexao' + (extra || '')); } }
+  function pintar() {
+    if (ttl <= 0) { return; }
+    area.hidden = false;
+    msg.className = 'alerta';
+    msg.textContent = 'QR ' + (maximo - restantes) + ' de ' + maximo + ', expira em ' + ttl + ' s';
+  }
+  function contagem() {
+    if (!ativo() || saiu) { return; }
+    if (ttl > 0) { ttl -= 1; pintar(); }
+    setTimeout(contagem, 1000);
+  }
+  function falhou(texto) {
+    falhas += 1;
+    msg.className = 'ruim';
+    msg.textContent = texto;
+    area.hidden = false;
+    if (falhas < 3) { setTimeout(consultar, 5000); }
+    else { msg.textContent = texto + ' Parei de consultar; recarregue a página.'; }
+  }
+  function consultar() {
+    if (!ativo() || saiu) { return; }
+    fetch('/conexao/tick', { credentials: 'same-origin' })
+      .then(function (r) {
+        if (!r.ok) { var e = new Error('http'); e.status = r.status; throw e; }
+        return r.json();
+      })
+      .then(function (d) {
+        falhas = 0;
+        estado = d.estado;
+        if (typeof d.qrs_hoje === 'number') {
+          contador.textContent = d.qrs_hoje;
+          contador.className = d.qrs_hoje >= teto ? 'ruim' : '';
+        }
+        if (typeof d.restantes === 'number') { restantes = d.restantes; restantesEl.textContent = d.restantes; }
+        if (d.estado === 'conectado') { sair(); return; }
+        if (!ativo()) { sair(d.logout_confirmado === false ? '?logout=0' : '?expirou=1'); return; }
+        if (d.base64 && String(d.base64).indexOf('data:image/') === 0 && img.getAttribute('src') !== d.base64) {
+          img.src = d.base64;
+        }
+        if (typeof d.ttl === 'number') { ttl = d.ttl; }
+        pintar();
+        setTimeout(consultar, 5000);
+      })
+      .catch(function (e) {
+        if (e && e.status === 502) { falhou('Evolution fora do ar.'); }
+        else if (e && e.status === 401) { msg.className = 'ruim'; msg.textContent = 'Sessão expirou; entre de novo em /login.'; }
+        else { falhou('Sem resposta do painel.'); }
+      });
+  }
+  var fqr = document.getElementById('f-qr');
+  if (fqr) fqr.addEventListener('submit', function () { var b = fqr.querySelector('button'); if (b) b.disabled = true; });
+  if (ativo()) { pintar(); setTimeout(contagem, 1000); setTimeout(consultar, 5000); }
+})();
+</script>

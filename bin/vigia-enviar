@@ -1,0 +1,157 @@
+#!/opt/homebrew/bin/python3
+"""Cliente da API local de envio do Greg (pedido 10, R-15, D-44) para as ferramentas do dono: Claude Code, scripts, cron.
+Uso:
+  echo '{"origem":"claude-code","texto":"Oi {nome}, …","destinatarios":[{"para":"5592900001111","nome":"Ana"}]}' \\
+    | vigia-enviar [--esperar [SEGUNDOS]]          cria um lote (JSON pelo stdin) e, com --esperar, aguarda o fim
+  vigia-enviar estado <lote>                        estado do lote, por destinatário
+  vigia-enviar parar <lote> | retomar <lote>        para (o que saiu, saiu) ou retoma um lote pausado/parado
+  vigia-enviar fila                                 resumo da fila e últimos lotes
+O token (VIGIA_TOKEN_ENVIO) sai de ~/.vigia-envio.env 0600 (Keychain só se ligado, D-45) e o JSON do stdin: nada vai em argv, nada no `ps`.
+Saída: JSON em stdout. Código: 0 ok (lote aceito, ou concluído sem incerto/pulado quando --esperar) · 1 lote terminou com
+pendência (pausado, parado, interrompido, incerto ou pulado) · 2 não rodou (token ausente, painel fora, pedido recusado).
+Quem chama: o dono e as ferramentas dele. O coletor (claude -p) não tem o token e não alcança esta API.
+O que não faz: não fala com a Evolution (só com o painel em 127.0.0.1), não imprime o token, não repete envio sozinho.
+Ambiente opcional: VIGIA_PORT (padrão: VIGIA_PORT do .env do projeto, senão 8120) · VIGIA_ENVIO_ENV (caminho do arquivo do token).
+"""
+import argparse
+import json
+import os
+import sys
+import time
+import urllib.error
+import urllib.request
+from pathlib import Path
+
+RAIZ = Path(__file__).resolve().parents[1]
+if str(RAIZ) not in sys.path:
+    sys.path.insert(0, str(RAIZ))
+
+from app import rede, segredos  # noqa: E402
+
+PENDENTES = ("pausado", "parado", "interrompido")
+
+
+def _ler_env(caminho: Path) -> dict:
+    saida = {}
+    try:
+        for linha in caminho.read_text(encoding="utf-8").splitlines():
+            linha = linha.strip()
+            if not linha or linha.startswith("#") or "=" not in linha:
+                continue
+            k, v = linha.split("=", 1)
+            saida[k.strip()] = v.split(" #", 1)[0].strip().strip('"').strip("'")
+    except OSError:
+        pass
+    return saida
+
+
+def token() -> str:
+    """VIGIA_TOKEN_ENVIO: ~/.vigia-envio.env 0600; Keychain só se ligado (opt-in, D-45)."""
+    do_keychain = segredos.ler("VIGIA_TOKEN_ENVIO")
+    if do_keychain:
+        return do_keychain
+    arq = Path(os.environ.get("VIGIA_ENVIO_ENV") or (Path.home() / ".vigia-envio.env"))
+    try:
+        if arq.stat().st_mode & 0o077:
+            _sair(2, f"{arq} com permissão de grupo/outros; corrija com chmod 600")
+    except OSError:
+        _sair(2, f"token de envio ausente: {arq} não existe")
+    t = _ler_env(arq).get("VIGIA_TOKEN_ENVIO", "")
+    if not t:
+        _sair(2, f"VIGIA_TOKEN_ENVIO vazio em {arq}")
+    return t
+
+
+def porta() -> int:
+    v = os.environ.get("VIGIA_PORT") or _ler_env(RAIZ / ".env").get("VIGIA_PORT") or "8120"
+    return int(v) if str(v).isdigit() else 8120
+
+
+def _sair(codigo: int, mensagem: str, **extra) -> None:
+    print(json.dumps({"erro": mensagem, **extra}, ensure_ascii=False), file=sys.stdout if codigo != 2 else sys.stderr)
+    sys.exit(codigo)
+
+
+def chamar(metodo: str, caminho: str, corpo: dict | None = None, timeout: float = 40.0) -> tuple[int, dict]:
+    dados = json.dumps(corpo).encode("utf-8") if corpo is not None else None
+    req = urllib.request.Request(f"http://127.0.0.1:{porta()}{caminho}", data=dados, method=metodo)
+    req.add_header("X-Vigia-Envio", token())
+    req.add_header("Accept", "application/json")
+    if dados is not None:
+        req.add_header("Content-Type", "application/json")
+    try:
+        with rede.ABRIDOR.open(req, timeout=timeout) as r:
+            return r.status, json.loads(r.read().decode("utf-8") or "{}")
+    except urllib.error.HTTPError as e:
+        try:
+            obj = json.loads(e.read().decode("utf-8") or "{}")
+        except ValueError:
+            obj = {"erro": f"HTTP {e.code}"}
+        return e.code, obj
+    except (urllib.error.URLError, OSError, ValueError) as e:
+        _sair(2, f"painel do Greg não respondeu em 127.0.0.1:{porta()} ({type(e).__name__}); confira `bin/vigia.sh status`")
+
+
+def _imprimir(obj) -> None:
+    print(json.dumps(obj, ensure_ascii=False, indent=2))
+
+
+def _codigo_final(est: dict) -> int:
+    if est.get("estado") in PENDENTES:
+        return 1
+    c = est.get("contagem") or {}
+    return 1 if (c.get("incertos") or c.get("pulados") or c.get("cancelados")) else 0
+
+
+def criar(args) -> int:
+    bruto = sys.stdin.read()
+    try:
+        pedido = json.loads(bruto)
+    except ValueError:
+        _sair(2, "stdin não é JSON válido")
+    if not isinstance(pedido, dict):
+        _sair(2, "o JSON do pedido precisa ser um objeto {origem, texto, destinatarios[, idempotencia, conferir]}")
+    st, obj = chamar("POST", "/envios", pedido)
+    if st not in (200, 202):
+        _sair(2, obj.get("erro", f"HTTP {st}"), **{k: v for k, v in obj.items() if k != "erro"})
+    if args.esperar is None:
+        _imprimir(obj)
+        return 0
+    limite = time.monotonic() + args.esperar
+    est = obj
+    while est.get("estado") in ("na_fila", "enviando", "aguardando_conexao") and time.monotonic() < limite:
+        time.sleep(2.0)
+        st, est = chamar("GET", f"/envios/{obj['id']}")
+        if st != 200:
+            _sair(2, est.get("erro", f"HTTP {st}"))
+    _imprimir(est)
+    if est.get("estado") in ("na_fila", "enviando", "aguardando_conexao"):
+        return 1
+    return _codigo_final(est)
+
+
+def acao(args) -> int:
+    caminho = {"estado": "GET /envios/{id}", "parar": "POST /envios/{id}/parar", "retomar": "POST /envios/{id}/retomar",
+               "fila": "GET /envios"}[args.comando]
+    metodo, rota = caminho.split(" ", 1)
+    st, obj = chamar(metodo, rota.replace("{id}", str(args.lote or "")), {} if metodo == "POST" else None)
+    if st != 200:
+        _sair(2, obj.get("erro", f"HTTP {st}"), **{k: v for k, v in obj.items() if k != "erro"})
+    _imprimir(obj)
+    return _codigo_final(obj) if args.comando == "estado" else 0
+
+
+def main(argv=None) -> int:
+    ap = argparse.ArgumentParser(prog="vigia-enviar", description="API local de envio do Greg (JSON do lote pelo stdin).")
+    ap.add_argument("comando", nargs="?", choices=("criar", "estado", "parar", "retomar", "fila"), default="criar")
+    ap.add_argument("lote", nargs="?", type=int, help="id do lote (estado | parar | retomar)")
+    ap.add_argument("--esperar", nargs="?", const=3600.0, type=float, default=None,
+                    help="aguardar o lote terminar (segundos; sem valor = 3600) e imprimir o estado final")
+    args = ap.parse_args(argv)
+    if args.comando in ("estado", "parar", "retomar") and args.lote is None:
+        ap.error(f"{args.comando} exige o id do lote")
+    return criar(args) if args.comando == "criar" else acao(args)
+
+
+if __name__ == "__main__":
+    sys.exit(main())

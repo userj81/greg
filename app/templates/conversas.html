@@ -1,0 +1,16 @@
+<!-- fragmento: embrulhado por _base.html via app/paginas/_comum.py -->
+<div class="topo">
+  <div><h1>Conversas</h1><div class="sub">Conversas com movimento nos últimos $dias dia(s). Só o que a IA classificou; o texto bruto não aparece aqui.</div></div>
+</div>
+<form class="linha" method="get" action="/conversas">
+  <div><label for="dias">Janela (dias)</label><input id="dias" type="number" min="1" max="90" name="dias" value="$dias" style="width:90px"></div>
+  <button type="submit" class="neutro">Atualizar</button>
+</form>
+<div class="cartao">
+<table>
+<thead><tr><th>Contato</th><th class="num">Novas</th><th>Última classe</th><th>Última</th></tr></thead>
+<tbody>
+$linhas
+</tbody>
+</table>
+</div>

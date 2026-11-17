@@ -1,0 +1,44 @@
+# Greg completo no Docker (Linux, Windows com WSL2 ou Mac): Evolution + Postgres + Redis (infra/docker-compose.yml) e o
+# serviço vigia (painel, ciclo de leitura, transcrição). Tudo publicado só em 127.0.0.1 do seu computador.
+#
+#   bin/preparar-docker.sh        # uma vez: gera docker.env com senhas aleatórias (0600)
+#   docker compose up -d --build  # sobe tudo; painel em http://127.0.0.1:8120
+#   porta ocupada ("port is already allocated"): bin/preparar-docker.sh --portas-livres troca pela próxima livre e
+#   grava no docker.env; aí suba com: docker compose --env-file docker.env up -d --build
+#   docker compose exec -it vigia claude   # uma vez: /login na sua conta do Claude
+#
+# Segredos e escolhas ficam em docker.env (fora do git). config.toml (janelas, tetos, horários) é lido da raiz do repo.
+name: vigia
+
+include:
+  - path: infra/docker-compose.yml
+    env_file: docker.env
+
+services:
+  vigia:
+    build: .
+    restart: unless-stopped
+    depends_on:
+      db:
+        condition: service_healthy
+      api:
+        condition: service_started
+    env_file: docker.env
+    environment:
+      EVOLUTION_URL: "http://api:8080"
+      VIGIA_PG_HOST: "db"
+    ports:
+      - "127.0.0.1:${VIGIA_PORTA_HOST:-8120}:8120"   # mude VIGIA_PORTA_HOST só se a 8120 estiver ocupada
+    volumes:
+      - vigia_dados:/app/dados          # banco do Greg, cursor, lotes, relatórios (o cru é apagado toda semana)
+      - vigia_home:/home/vigia          # login do Claude Code
+      - ./config.toml:/app/config.toml:ro
+    deploy:
+      resources:
+        limits:
+          cpus: "2.0"
+          memory: 3G
+
+volumes:
+  vigia_dados:
+  vigia_home:

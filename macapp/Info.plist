@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+	<key>CFBundleName</key><string>Greg</string>
+	<key>CFBundleDisplayName</key><string>Greg</string>
+	<key>CFBundleIdentifier</key><string>io.vigia.vigia</string>
+	<key>CFBundleVersion</key><string>1</string>
+	<key>CFBundleShortVersionString</key><string>1.0</string>
+	<key>CFBundleExecutable</key><string>Vigia</string>
+	<key>CFBundlePackageType</key><string>APPL</string>
+	<key>CFBundleIconFile</key><string>Greg</string>
+	<key>LSMinimumSystemVersion</key><string>13.0</string>
+	<key>NSHighResolutionCapable</key><true/>
+	<key>NSHumanReadableCopyright</key><string>uso pessoal · tudo local</string>
+	<key>NSFaceIDUsageDescription</key><string>Abrir o Greg</string>
+	<key>NSMicrophoneUsageDescription</key><string>Gravar o áudio que você envia pelo Greg</string>
+	<key>NSAppTransportSecurity</key>
+	<dict>
+		<key>NSAllowsLocalNetworking</key><true/>
+	</dict>
+	<key>VigiaRaiz</key><string>~/vigia-whatsapp</string>
+</dict>
+</plist>

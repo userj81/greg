@@ -1,0 +1,44 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<!-- Modelo: /REPO_RAIZ e /REPO_HOME são substituídos por bin/instalar-launchagent.sh. Sem segredo: o .env é lido pelos scripts. -->
+<plist version="1.0">
+<dict>
+	<key>Label</key>
+	<string>io.vigia.vigia-whatsapp</string>
+	<key>ProgramArguments</key>
+	<array>
+		<string>/bin/bash</string>
+		<string>/REPO_RAIZ/bin/vigia.sh</string>
+	</array>
+	<key>WorkingDirectory</key>
+	<string>/REPO_RAIZ</string>
+	<key>EnvironmentVariables</key>
+	<dict>
+		<key>PATH</key>
+		<string>/opt/homebrew/bin:/REPO_HOME/.local/bin:/usr/local/bin:/usr/bin:/bin:/usr/sbin:/sbin</string>
+		<key>PYTHONPATH</key>
+		<string>/REPO_RAIZ</string>
+	</dict>
+	<key>StartCalendarInterval</key>
+	<array>
+		<dict>
+			<key>Minute</key>
+			<integer>0</integer>
+		</dict>
+		<dict>
+			<key>Minute</key>
+			<integer>30</integer>
+		</dict>
+	</array>
+	<key>RunAtLoad</key>
+	<true/>
+	<key>ProcessType</key>
+	<string>Background</string>
+	<key>LowPriorityIO</key>
+	<true/>
+	<key>StandardOutPath</key>
+	<string>/REPO_HOME/Library/Logs/vigia-whatsapp.out.log</string>
+	<key>StandardErrorPath</key>
+	<string>/REPO_HOME/Library/Logs/vigia-whatsapp.err.log</string>
+</dict>
+</plist>

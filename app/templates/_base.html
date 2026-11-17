@@ -1,0 +1,636 @@
+<!doctype html>
+<html lang="pt-BR"$html_attrs>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="color-scheme" content="light dark">
+<title>$titulo · Greg</title>
+<script>/* modo de gravação (D-24): marca o <html> antes da primeira pintura; o estado vive só neste navegador */
+try { if (localStorage.getItem('vigia-gravacao')) document.documentElement.setAttribute('data-gravacao', '1'); } catch (e) {}</script>
+<style>
+/* Estilo Papel (pedido 39, guia de 08/11/2026): janela de Mac com três painéis, superfícies planas separadas por fio de
+   1 px, uma cor saturada (o acento do sistema) e os tamanhos de texto do macOS. Nenhum fundo decorativo, nenhum vidro
+   nem desfoque no conteúdo. Claro e escuro saem do mesmo token com light-dark(); data-tema força um dos dois. */
+:root {
+  color-scheme: light dark;
+  --fonte: -apple-system, "SF Pro Text", system-ui, sans-serif;
+  /* tipografia em rem sobre 13 px (html font-size), para o ajuste "Tamanho da letra" escalar tudo junto */
+  --t-titulo-toolbar: 700 1.1538rem/1.3; --t-titulo-item: 600 1.3077rem/1.35; --t-nome: 600 1rem/1.45; --t-corpo: 400 1rem/1.45;
+  --t-meta: 400 .9231rem/1.4; --t-rotulo: 700 .8462rem/1.3; --t-vazio: 600 1.3077rem/1.3; --t-mini: 400 .8846rem/1.3;
+  --lateral: 212px; --lista: 380px; --lista-estreita: 300px; --toolbar: 52px; --rodape-status: 26px; --controle: 28px; --item-lateral: 28px;
+  --raio-controle: 6px; --raio-grupo: 8px; --raio-bolha: 14px; --raio-pilula: 4px; --pad-detalhe: 20px 24px; --largura-detalhe: 640px;
+  --fundo: light-dark(#FFFFFF, #1E2024); --fundo-2: light-dark(#F6F7F9, #26282D); --lateral-fundo: light-dark(#E8EAEE, #26282D);
+  --fio: light-dark(rgba(16,24,40,.10), rgba(0,0,0,.5)); --fio-fraco: light-dark(rgba(16,24,40,.07), rgba(255,255,255,.06));
+  /* --meta e --rotulo medidos (prova-visual): >= 4,5:1 em todo fundo em que viram texto: lateral, botão escuro, grupo */
+  --texto: light-dark(#1B1F27, #E8EAEE); --texto-2: light-dark(#3B4453, #C5CAD3); --meta: light-dark(#5B6472, #B0B6BF);
+  --rotulo: light-dark(#606978, #9AA1AD); --placeholder: #8B929E; --sobre-acento: #FFFFFF; --qr-fundo: #FFFFFF;
+  --acento: light-dark(#007AFF, #0A84FF); --acento-topo: light-dark(#1E8CFF, #2B95FF); --acento-texto: light-dark(#0071E3, #3B9BFF);
+  --acento-anel: light-dark(rgba(0,90,200,.35), rgba(0,70,160,.6)); --selecao: light-dark(rgba(0,122,255,.16), rgba(10,132,255,.24));
+  /* anel de foco (outline, como o macOS) e bolha de saída: acento 8%/14% mais escuro para o branco render 4,5:1 em texto corrido */
+  --foco: light-dark(rgba(0,122,255,.5), rgba(10,132,255,.6)); --bolha-saida: light-dark(#0070EB, #0972DB);
+  --ok: light-dark(#1F7A45, #6FD39A);
+  --a-confirmar-fundo: light-dark(#FBF1D6, #3A2E12); --a-confirmar-texto: light-dark(#7A5300, #E9C46A);
+  --atrasado-fundo: light-dark(#FBE7E4, #3F1D1A); --atrasado-texto: light-dark(#9B1C12, #F29C92); --destrutivo: light-dark(#B42318, #F0877C);
+  --classe-demanda: light-dark(#0071E3, #4D8EF0); --classe-lembrar: light-dark(#6B4FBB, #9D86F0); --classe-atencao: light-dark(#0E7C7B, #3FBFB6); --classe-aviso: #8B929E;
+  --bezel: 0 0 0 .5px light-dark(rgba(16,24,40,.24), rgba(255,255,255,.12)), 0 1px 1px light-dark(rgba(16,24,40,.08), rgba(0,0,0,.4));
+  --campo-sombra: inset 0 0 0 .5px light-dark(rgba(16,24,40,.28), rgba(255,255,255,.18)), inset 0 1px 1px light-dark(rgba(16,24,40,.06), rgba(0,0,0,0));
+  --hover: light-dark(rgba(16,24,40,.06), rgba(255,255,255,.07)); --pressionado: light-dark(rgba(16,24,40,.10), rgba(255,255,255,.12));
+  --botao-fundo: light-dark(#FFFFFF, #44474E); --campo-fundo: light-dark(#FFFFFF, #1A1C20); --menu-fundo: light-dark(#FFFFFF, #33363D);
+  --bolha-fundo: light-dark(#F0F1F4, #2B2E34); --citacao-fundo: light-dark(#F6F7F9, #2B2E34); --seg-fundo: light-dark(#E4E7EC, rgba(255,255,255,.10));
+  --tog-fundo: light-dark(#C9CED6, #4A4E57); --avatar-fundo: light-dark(#D5D8DE, #3A3D45); --avatar-cor: light-dark(#6B7380, #A2A8B3);
+  --ficha-fundo: light-dark(#E1E4E9, #3A3D45); --ficha-cor: light-dark(#4E5665, #C5CAD3);   /* monograma: texto, por isso mais contraste que o avatar (ícone) */
+  --sombra-leve: 0 1px 2px light-dark(rgba(16,24,40,.14), rgba(0,0,0,.4));
+  --grupo-borda: light-dark(rgba(16,24,40,.16), rgba(255,255,255,.10)); --audio-fundo: light-dark(rgba(16,24,40,.06), rgba(255,255,255,.08));
+  --sombra-flutuante: 0 0 0 .5px light-dark(rgba(16,24,40,.2), rgba(0,0,0,.6)), 0 10px 30px light-dark(rgba(16,24,40,.18), rgba(0,0,0,.5));
+  --esqueleto: light-dark(rgba(16,24,40,.08), rgba(255,255,255,.08));
+}
+:root[data-tema="claro"] { color-scheme: light; }
+:root[data-tema="escuro"] { color-scheme: dark; }
+/* No app do Mac o acento é o do sistema (Ajustes do Sistema > Aparência). Fora dele (Playwright, navegador) fica o azul. */
+@supports (color: AccentColor) and (color: color-mix(in srgb, red, blue)) {
+  :root[data-app="mac"] {
+    --acento: AccentColor; --acento-topo: color-mix(in srgb, AccentColor, white 12%);
+    --acento-texto: light-dark(color-mix(in srgb, AccentColor, black 8%), color-mix(in srgb, AccentColor, white 22%));
+    --acento-anel: light-dark(color-mix(in srgb, AccentColor 45%, black 10%), color-mix(in srgb, AccentColor 55%, black 20%));
+    --selecao: light-dark(color-mix(in srgb, AccentColor 16%, transparent), color-mix(in srgb, AccentColor 24%, transparent));
+    --foco: light-dark(color-mix(in srgb, AccentColor 50%, transparent), color-mix(in srgb, AccentColor 60%, transparent));
+    --bolha-saida: light-dark(color-mix(in srgb, AccentColor 92%, black), color-mix(in srgb, AccentColor 86%, black));
+    --classe-demanda: var(--acento-texto);
+  }
+}
+html { font-size: 13px; height: 100%; }
+body { margin: 0; height: 100%; display: flex; overflow: hidden; background: var(--fundo); color: var(--texto); font: var(--t-corpo) var(--fonte);
+  -webkit-font-smoothing: antialiased; text-rendering: optimizeLegibility; }
+*, *::before, *::after { box-sizing: border-box; }
+a { color: var(--acento-texto); text-decoration: none; }
+a:hover { text-decoration: underline; }
+p, h1, h2, h3, h4, ul, ol, dl, figure, blockquote { margin: 0; }
+button, input, select, textarea { font: inherit; color: inherit; }
+svg { display: block; }
+[hidden] { display: none !important; }   /* o atributo vence qualquer display de componente (.btn, .vazio, .qr-area) */
+.sr-only { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; border: 0; }
+/* Foco por teclado = anel em outline (o box-shadow era vencido pelo bezel de .btn e sumia) */
+:focus-visible { outline: 3px solid var(--foco); outline-offset: 1px; }
+::selection { background: var(--selecao); }
+::placeholder { color: var(--placeholder); }
+
+/* ---------------------------------------------------------------- lateral */
+.lateral { flex: 0 0 var(--lateral); display: flex; flex-direction: column; gap: 1px; min-height: 0; padding: 14px 10px 10px;
+  background: var(--lateral-fundo); border-right: 1px solid var(--fio); -webkit-user-select: none; user-select: none;
+  transition: margin-left .18s ease, visibility 0s; }
+:root[data-app="mac"] .lateral { padding-top: 46px; }
+.marca { display: flex; align-items: center; gap: 8px; padding: 2px 8px 14px; font-weight: 700; }
+/* a marca é o nome em serifa itálica, em contorno (sem fonte), e o ponto na cor de destaque: docs/design/marca-greg */
+.marca .nome { height: 28px; width: auto; flex: none; fill: currentColor; }
+.marca .nome .ponto { fill: var(--acento); }
+.marca .recolher { margin: -3px -6px -3px auto; }
+.lateral nav { display: flex; flex-direction: column; gap: 1px; }
+.lateral nav a { display: flex; align-items: center; gap: 8px; height: var(--item-lateral); padding: 0 8px; border-radius: var(--raio-controle);
+  color: var(--texto); text-decoration: none; white-space: nowrap; }
+.lateral nav a:hover { background: var(--hover); text-decoration: none; }
+.lateral nav a.ativo { background: var(--selecao); }
+.lateral nav a svg { width: 16px; height: 16px; color: var(--acento-texto); flex: none; }
+.lateral nav a .n { margin-left: auto; font: var(--t-meta) var(--fonte); color: var(--rotulo); }
+.lateral-fim { margin-top: auto; display: flex; flex-direction: column; gap: 2px; }
+/* rodapé: indicador da conexão + engrenagem de Ajustes (pedido 40: ⌘, e menu do app sozinhos não eram achados) */
+.lateral-linha { display: flex; align-items: center; gap: 2px; }
+.lateral-linha .conexao-estado { flex: 1; min-width: 0; }
+.lateral-ajustes { width: 28px; height: 28px; flex: none; display: grid; place-items: center; border-radius: var(--raio-controle); color: var(--meta); }
+.lateral-ajustes svg { width: 16px; height: 16px; }
+.lateral-ajustes:hover { background: var(--hover); color: var(--texto); }
+.lateral-ajustes.ativo { background: var(--selecao); color: var(--texto); }
+/* modo de gravação no rodapé (pedido 42): botão igual à engrenagem; ligado = pílula âmbar, a mesma do selo da toolbar */
+.lateral-gravar { border: 0; background: transparent; padding: 0; cursor: default; }
+.lateral-gravar[aria-pressed="true"] { background: var(--a-confirmar-fundo); color: var(--a-confirmar-texto); }
+.lateral-gravar[aria-pressed="true"]:hover { background: var(--a-confirmar-fundo); color: var(--a-confirmar-texto); }
+.conexao-estado { display: flex; align-items: center; gap: 8px; padding: 8px; border-radius: var(--raio-controle); font: var(--t-meta) var(--fonte);
+  color: var(--meta); text-decoration: none; white-space: nowrap; overflow: hidden; }
+.conexao-estado span:last-child { overflow: hidden; text-overflow: ellipsis; }
+.conexao-estado:hover { background: var(--hover); text-decoration: none; }
+.conexao-estado.ativo { background: var(--selecao); color: var(--texto); }
+.conexao-estado .ponto { width: 8px; height: 8px; border-radius: 50%; background: var(--placeholder); flex: none; }
+.conexao-estado.ok .ponto { background: var(--ok); }
+.conexao-estado.ruim .ponto { background: var(--destrutivo); }
+.conexao-estado.alerta .ponto { background: var(--a-confirmar-texto); }
+.sair { display: flex; justify-content: flex-start; padding: 0 8px; }
+.sair button { border: 0; padding: 4px 0; background: none; color: var(--meta); font: var(--t-meta) var(--fonte); cursor: pointer; }
+.sair button:hover { color: var(--texto); text-decoration: underline; }
+:root[data-app="mac"] .sair { display: none; }
+
+/* ---------------------------------------------------------------- painéis */
+main { flex: 1; display: flex; flex-direction: column; min-width: 0; min-height: 0; position: relative; }
+.paineis { flex: 1; display: flex; min-height: 0; min-width: 0; }
+.painel { display: flex; flex-direction: column; min-width: 0; min-height: 0; background: var(--fundo); }
+.painel.lista { flex: 0 1 var(--lista); min-width: 240px; border-right: 1px solid var(--fio); }
+.painel.lista.estreita { flex: 0 1 var(--lista-estreita); }
+.painel.detalhe { flex: 999 1 400px; position: relative; }
+.painel.lista ~ .painel.detalhe { min-width: 300px; }
+
+/* ---------------------------------------------------------------- janela dividida (pedido 48, D-59)
+   Divisória = item de 1 px em cima do fio (margem negativa: não desloca nada), com 9 px de área de pegar. Arrastar muda --lateral (no
+   <html>) ou --lista (em .paineis); o script do fim da página cria as divisórias e guarda as medidas (POST /layout).
+   Sem largura escolhida a lateral é automática, como sempre foi: 212 px ou o que o rodapé dela pedir ("Conectado, lido às 19:40"
+   não é cortado). Com largura escolhida (--lateral no próprio <html>) ela obedece, de 168 a 360 px, e cede espaço na janela mínima.
+   Lateral recolhida: data-lateral="recolhida" no <html>. No Greg.app compilado antes do pedido 48 (sem data-alca) a
+   alça de arrastar a janela é fixa em 212 px, então lá a lateral não recolhe nem fica mais estreita que isso. */
+:root[style*="--lateral:"] .lateral { flex: 0 1 var(--lateral); min-width: 168px; }
+:root[style*="--lateral:"] main { min-width: 540px; }
+.divisoria { flex: 0 0 1px; margin-left: -1px; position: relative; z-index: 6; }
+.divisoria::before { content: ""; position: absolute; top: 0; bottom: 0; left: -4px; width: 9px; cursor: col-resize; }
+/* foco por teclado: a própria linha engrossa para 3 px na cor de destaque */
+.divisoria:focus-visible { background: var(--acento); outline: 1px solid var(--acento); outline-offset: 0; }
+:root[data-arrastando], :root[data-arrastando] * { cursor: col-resize !important; -webkit-user-select: none !important; user-select: none !important; }
+:root[data-arrastando] .lateral { transition: none; }
+.mostrar-lateral { display: none; position: absolute; z-index: 7; top: 12px; left: 10px; }
+:root[data-app="mac"]:not([data-alca]) .vigia-lateral { display: none; }
+:root[data-lateral="recolhida"]:is(:not([data-app]), [data-alca]) .lateral { flex: 0 0 var(--lateral); min-width: 0;
+  margin-left: calc(-1 * var(--lateral)); visibility: hidden; transition: margin-left .18s ease, visibility 0s .18s; }
+:root[data-lateral="recolhida"]:is(:not([data-app]), [data-alca]) .lateral + .divisoria { display: none; }
+:root[data-lateral="recolhida"]:is(:not([data-app]), [data-alca]) .mostrar-lateral { display: grid; }
+:root[data-lateral="recolhida"]:is(:not([data-app]), [data-alca]) .paineis > section:first-of-type > .toolbar { padding-left: 46px; }
+/* a lista que passa a encostar na borda guarda largura para a toolbar dela (título, filtro e botões) caber ao lado do botão */
+:root[data-lateral="recolhida"]:is(:not([data-app]), [data-alca]) .paineis > section.lista:first-of-type { min-width: 320px; }
+/* no app os botões da janela (semáforo) ficam em cima do canto: o botão e a toolbar começam depois deles */
+:root[data-lateral="recolhida"][data-alca] .mostrar-lateral { left: var(--semaforo, 78px); }
+:root[data-lateral="recolhida"][data-alca] .paineis > section:first-of-type > .toolbar { padding-left: calc(var(--semaforo, 78px) + 36px); }
+:root[data-lateral="recolhida"][data-alca] .paineis > section.lista:first-of-type { min-width: calc(var(--semaforo, 78px) + 300px); }
+.toolbar { flex: none; display: flex; align-items: center; gap: 8px; height: var(--toolbar); padding: 0 14px; border-bottom: 1px solid var(--fio);
+  background: var(--fundo-2); -webkit-user-select: none; user-select: none; }
+.toolbar .titulo { font: var(--t-titulo-toolbar) var(--fonte); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.toolbar .titulo-grupo { display: flex; align-items: center; gap: 10px; min-width: 0; }
+.toolbar .titulo-grupo .sub { font: var(--t-mini) var(--fonte); color: var(--meta); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.espaco { flex: 1; }
+.corpo { flex: 1; min-height: 0; overflow: auto; display: flex; flex-direction: column; }
+.corpo.centro { justify-content: center; }
+.miolo { padding: var(--pad-detalhe); max-width: var(--largura-detalhe); width: 100%; }
+.miolo.largo { max-width: none; }
+.status { flex: none; height: var(--rodape-status); display: flex; align-items: center; justify-content: center; gap: 6px; padding: 0 10px;
+  border-top: 1px solid var(--fio); background: var(--fundo-2); font: var(--t-meta) var(--fonte); color: var(--meta);
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.status:empty { visibility: hidden; }
+.banner-offline { display: none; flex: none; height: 28px; align-items: center; justify-content: center; gap: 8px; padding: 0 12px;
+  background: var(--a-confirmar-fundo); color: var(--a-confirmar-texto); font: var(--t-meta) var(--fonte); border-bottom: 1px solid var(--fio); }
+:root[data-offline] .banner-offline { display: flex; }
+/* pedido 83 (D-86): sessão caída não deixa a tela aberta; enquanto a ida ao login carrega, nada recebe clique */
+:root[data-sessao-caiu] body { pointer-events: none; }
+:root[data-sessao-caiu] .banner-offline { display: none; }
+/* pedido 63, lote 2: uma peça do Greg parou. Fica em todas as telas até a peça voltar; o passo a passo mora em /avisos. */
+.banner-avisos { display: flex; flex: none; min-height: 30px; align-items: center; justify-content: center; gap: 8px; padding: 3px 12px;
+  background: var(--atrasado-fundo); color: var(--atrasado-texto); font: var(--t-meta) var(--fonte); border-bottom: 1px solid var(--fio); }
+.banner-avisos:empty { display: none; }
+.banner-avisos b { font-weight: 600; white-space: nowrap; }
+.banner-avisos .porque { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.banner-avisos .mais { white-space: nowrap; opacity: .8; }
+.banner-avisos a { color: inherit; font-weight: 600; text-decoration: underline; white-space: nowrap; }
+
+/* ---------------------------------------------------------------- controles */
+.btn { height: var(--controle); padding: 0 12px; border: 0; border-radius: var(--raio-controle); background: var(--botao-fundo); color: var(--texto);
+  font: 500 1rem/1 var(--fonte); display: inline-flex; align-items: center; justify-content: center; gap: 7px; white-space: nowrap; box-shadow: var(--bezel);
+  cursor: default; text-decoration: none; flex: none; }
+.btn:hover { background: var(--fundo-2); text-decoration: none; }
+.btn:active { background: var(--pressionado); }
+.btn svg { width: 14px; height: 14px; flex: none; }
+.btn.primario { color: var(--sobre-acento); font-weight: 600; background: linear-gradient(180deg, var(--acento-topo), var(--acento));
+  box-shadow: 0 0 0 .5px var(--acento-anel), 0 1px 1px rgba(16,24,40,.14), inset 0 .5px 0 rgba(255,255,255,.28); }
+.btn.primario:hover { filter: brightness(1.04); }
+.btn.destrutivo { color: var(--destrutivo); }
+.btn.icone { width: var(--controle); padding: 0; background: transparent; box-shadow: none; color: var(--texto); }
+.btn.icone svg { width: 16px; height: 16px; }
+.btn.icone:hover, .btn.icone[aria-expanded="true"], details[open] > .btn.icone { background: var(--hover); }
+.btn.sm { height: 22px; padding: 0 9px; font-size: .9231rem; }
+.btn[disabled], .btn[aria-disabled="true"] { opacity: .45; pointer-events: none; }
+.btn.pulldown { gap: 6px; }
+.btn .chevron { display: inline-grid; place-items: center; width: 10px; height: 10px; color: var(--rotulo); }
+.btn .chevron svg { width: 10px; height: 10px; }
+.popup > summary.btn { padding-right: 6px; }
+.popup .valor-rotulo { color: var(--meta); font-weight: 400; }
+.popup .valor { font-weight: 500; }
+.popup .caixa { width: 16px; height: 16px; border-radius: var(--raio-pilula); margin-left: 2px; color: var(--sobre-acento); display: inline-grid; place-items: center;
+  background: linear-gradient(180deg, var(--acento-topo), var(--acento)); box-shadow: 0 0 0 .5px var(--acento-anel); }
+.popup .caixa svg { width: 10px; height: 10px; }
+.acoes { display: flex; align-items: center; gap: 8px; }
+.campo { height: var(--controle); padding: 0 10px; border: 0; border-radius: var(--raio-controle); background: var(--campo-fundo); color: var(--texto);
+  font: var(--t-corpo) var(--fonte); box-shadow: var(--campo-sombra); min-width: 0; }
+.campo:focus { outline: 3px solid var(--foco); outline-offset: 0; }
+.campo[disabled] { background: var(--fundo-2); color: var(--meta); }
+textarea.campo { height: auto; min-height: 64px; padding: 6px 10px; resize: vertical; line-height: 1.45; }
+select.campo { padding-right: 6px; }
+.busca-caixa { position: relative; display: inline-flex; align-items: center; flex: 0 1 auto; min-width: 72px; }
+.busca-caixa > .campo { max-width: 100%; }
+.busca-caixa svg { position: absolute; left: 8px; width: 14px; height: 14px; color: var(--placeholder); pointer-events: none; }
+.campo.busca { padding-left: 26px; width: 200px; }
+.campo-rotulo { display: block; font: var(--t-meta) var(--fonte); color: var(--meta); margin-bottom: 4px; }
+.linha-campos { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+.form-coluna { display: flex; flex-direction: column; gap: 14px; }
+.form-coluna .campo { width: 100%; }
+.seg { display: inline-flex; gap: 2px; padding: 2px; border-radius: 7px; background: var(--seg-fundo); }
+.seg > button, .seg > a, .seg > label { height: 22px; padding: 0 10px; border: 0; border-radius: 5px; background: transparent; color: var(--texto);
+  font: 500 .9231rem/1 var(--fonte); display: inline-flex; align-items: center; white-space: nowrap; text-decoration: none; cursor: default; }
+.seg > .on, .seg > [aria-pressed="true"], .seg > [aria-current] { background: var(--botao-fundo); font-weight: 600; box-shadow: var(--sombra-leve); }
+.tog { width: 36px; height: 22px; border: 0; border-radius: 11px; background: var(--tog-fundo); position: relative; flex: none; cursor: default; padding: 0; transition: background .15s; }
+.tog::after { content: ""; position: absolute; top: 2px; left: 2px; width: 18px; height: 18px; border-radius: 50%; background: var(--sobre-acento); box-shadow: var(--sombra-leve); transition: left .15s; }
+.tog[aria-checked="true"] { background: var(--acento); }
+.tog[aria-checked="true"]::after { left: 16px; }
+.classe { display: inline-flex; align-items: center; gap: 5px; font: var(--t-meta) var(--fonte); color: var(--meta); white-space: nowrap; }
+.classe::before { content: ""; width: 6px; height: 6px; border-radius: 50%; background: var(--classe-aviso); flex: none; }
+.classe.demanda::before { background: var(--classe-demanda); }
+.classe.lembrar::before { background: var(--classe-lembrar); }
+.classe.atencao::before { background: var(--classe-atencao); }
+.pilula { display: inline-flex; align-items: center; height: 18px; padding: 0 7px; border-radius: var(--raio-pilula); font: 600 .8462rem/1 var(--fonte);
+  background: var(--a-confirmar-fundo); color: var(--a-confirmar-texto); white-space: nowrap; flex: none; }
+.pilula.atrasado { background: var(--atrasado-fundo); color: var(--atrasado-texto); }
+.nao-lida { width: 8px; height: 8px; border-radius: 50%; background: var(--acento-texto); flex: none; }
+.avatar { width: 34px; height: 34px; border-radius: 50%; background: var(--avatar-fundo); color: var(--avatar-cor); display: grid; place-items: center; flex: none; overflow: hidden; }
+.avatar svg { width: 18px; height: 18px; }
+.avatar.p { width: 30px; height: 30px; } .avatar.p svg { width: 16px; height: 16px; }
+.avatar.pp { width: 24px; height: 24px; } .avatar.pp svg { width: 13px; height: 13px; }
+.rotulo { font: var(--t-rotulo) var(--fonte); color: var(--rotulo); margin: 0 0 8px; }
+.rotulo:not(:first-child) { margin-top: 18px; }
+.kv { display: grid; grid-template-columns: 170px 1fr; gap: 0 16px; }
+.kv dt { color: var(--meta); }
+.kv dt, .kv dd { padding: 7px 0; border-top: 1px solid var(--fio-fraco); min-width: 0; }
+.kv dt:first-of-type, .kv dd:first-of-type { border-top: 0; }
+.kv b { font-weight: 600; }
+.kv b.ok { color: var(--ok); }
+.kv b.ruim { color: var(--destrutivo); }
+.kv .sub { display: block; color: var(--meta); font: var(--t-meta) var(--fonte); }
+.grupo { background: var(--fundo); border-radius: var(--raio-grupo); box-shadow: 0 0 0 .5px var(--grupo-borda); }
+.opt { display: grid; grid-template-columns: 190px 1fr; gap: 16px; align-items: center; padding: 12px 14px; border-top: 1px solid var(--fio-fraco); }
+.opt:first-child { border-top: 0; }
+.opt .l span { display: block; font: var(--t-meta) var(--fonte); color: var(--rotulo); }
+.opt .r { display: flex; align-items: center; gap: 10px; min-width: 0; flex-wrap: wrap; }
+.opt.linha-lista { grid-template-columns: 1fr; }
+table.tabela { width: 100%; border-collapse: collapse; font: var(--t-corpo) var(--fonte); }
+.tabela th { font: var(--t-rotulo) var(--fonte); color: var(--rotulo); text-align: left; padding: 8px 10px; border-bottom: 1px solid var(--fio); white-space: nowrap; }
+.tabela td { padding: 8px 10px; border-bottom: 1px solid var(--fio-fraco); vertical-align: top; }
+.tabela tbody tr:hover td { background: var(--fundo-2); }
+.tabela td.num, .tabela th.num { text-align: right; font-variant-numeric: tabular-nums; }
+.tabela .meta { color: var(--meta); font: var(--t-meta) var(--fonte); }
+pre, code, kbd { font-family: ui-monospace, Menlo, monospace; }
+pre { font-size: .9231rem; line-height: 1.5; padding: 10px 12px; border-radius: var(--raio-grupo); background: var(--fundo-2); overflow: auto; margin: 0; }
+hr.fio { border: 0; border-top: 1px solid var(--fio-fraco); margin: 14px 0; }
+.meta-linha { color: var(--meta); font: var(--t-meta) var(--fonte); }
+.texto-2 { color: var(--texto-2); }
+
+/* ---------------------------------------------------------------- listas */
+.itens { list-style: none; margin: 0; padding: 0; }
+.item-lista { display: flex; flex-direction: column; gap: 3px; padding: 10px 14px; border-bottom: 1px solid var(--fio-fraco); color: inherit; text-decoration: none; cursor: default; }
+.item-lista:hover { background: var(--fundo-2); text-decoration: none; }
+.item-lista.ativo, .item-lista[aria-current="true"] { background: var(--selecao); }
+.item-lista .cab { display: flex; align-items: baseline; justify-content: space-between; gap: 8px; font: var(--t-nome) var(--fonte); min-width: 0; }
+.item-lista .cab > :first-child { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.item-lista .cab time, .item-lista .cab .quando { font: var(--t-meta) var(--fonte); color: var(--rotulo); flex: none; font-weight: 400; }
+.item-lista .texto { color: var(--texto-2); overflow: hidden; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; }
+.item-lista .meta { display: flex; align-items: center; gap: 10px; min-width: 0; }
+.item-lista .meta > .espaco { flex: 1; }
+.secao-lista { padding: 10px 14px 4px; font: var(--t-rotulo) var(--fonte); color: var(--rotulo); position: sticky; top: 0; background: var(--fundo); }
+.citacao { background: var(--citacao-fundo); border-radius: 10px; border-top-left-radius: 3px; padding: 8px 11px; font-size: .9615rem; color: var(--texto-2); max-width: 420px; white-space: pre-wrap; overflow-wrap: anywhere; }
+.citacao small { display: block; margin-top: 4px; font: var(--t-mini) var(--fonte); color: var(--meta); }
+
+/* ---------------------------------------------------------------- menus (pull-down, pop-up, ···) */
+details.menu { position: relative; display: inline-block; flex: none; }
+details.menu > summary { list-style: none; }
+details.menu > summary::-webkit-details-marker { display: none; }
+details.menu > summary::marker { content: ""; }
+.menu-itens { position: absolute; top: calc(100% + 4px); left: 0; z-index: 30; min-width: 190px; padding: 5px; border-radius: var(--raio-grupo);
+  background: var(--menu-fundo); box-shadow: var(--sombra-flutuante); }
+.menu-itens.direita { left: auto; right: 0; }
+.menu-itens > a, .menu-itens > button { position: relative; display: flex; align-items: center; gap: 14px; width: 100%; padding: 6px 10px 6px 24px; border: 0;
+  border-radius: 5px; background: transparent; color: var(--texto); font: var(--t-corpo) var(--fonte); text-align: left; text-decoration: none;
+  cursor: default; white-space: nowrap; }
+.menu-itens > a > span, .menu-itens > button > span { flex: 1; }
+.menu-itens > a:hover, .menu-itens > button:hover, .menu-itens > a:focus-visible, .menu-itens > button:focus-visible { background: var(--acento); color: var(--sobre-acento); outline: 0; box-shadow: none; text-decoration: none; }
+/* item marcado: visto desenhado em CSS (herda a cor, vira branco no hover); glifo de texto era emoji para o lint */
+.menu-itens > .on::before { content: ""; position: absolute; left: 10px; top: 50%; width: 4px; height: 8px; border: solid currentColor; border-width: 0 1.5px 1.5px 0; transform: translateY(-60%) rotate(45deg); }
+.menu-itens > .destrutivo { color: var(--destrutivo); }
+.menu-itens > .destrutivo:hover { background: var(--destrutivo); color: var(--sobre-acento); }
+.menu-itens hr { border: 0; border-top: 1px solid var(--fio); margin: 4px 6px; }
+.menu-itens kbd { margin-left: auto; font: var(--t-rotulo) var(--fonte); font-weight: 400; color: var(--meta); }
+.menu-itens > :hover kbd { color: var(--sobre-acento); }
+.menu-itens .titulo-menu { padding: 4px 10px 6px; font: var(--t-rotulo) var(--fonte); color: var(--rotulo); }
+
+/* ---------------------------------------------------------------- estados */
+.vazio { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 4px; padding: 24px; text-align: center;
+  color: var(--meta); font: var(--t-corpo) var(--fonte); }
+.vazio b { font: var(--t-vazio) var(--fonte); color: var(--rotulo); }
+.esqueleto { padding: 12px 14px; display: flex; flex-direction: column; gap: 16px; }
+.esq-linha { display: flex; flex-direction: column; gap: 7px; }
+.esq-linha i { display: block; height: 10px; border-radius: 5px; background: var(--esqueleto); animation: pulsa 1.2s ease-in-out infinite; }
+@keyframes pulsa { 50% { opacity: .45; } }
+.erro-inline { display: inline-flex; align-items: center; gap: 10px; padding: 6px 10px; border-radius: var(--raio-controle); background: var(--atrasado-fundo); color: var(--atrasado-texto); font: var(--t-meta) var(--fonte); }
+.erro-inline .btn { height: 22px; padding: 0 9px; font-size: .9231rem; color: var(--texto); }
+.aviso-inline { display: inline-flex; align-items: center; gap: 10px; padding: 6px 10px; border-radius: var(--raio-controle); background: var(--a-confirmar-fundo); color: var(--a-confirmar-texto); font: var(--t-meta) var(--fonte); }
+.toast { position: absolute; left: 50%; bottom: 40px; transform: translateX(-50%); z-index: 50; display: flex; align-items: center; gap: 14px;
+  padding: 8px 12px 8px 14px; border-radius: var(--raio-grupo); background: var(--menu-fundo); color: var(--texto); font: 400 .9615rem/1.3 var(--fonte);
+  box-shadow: var(--sombra-flutuante); white-space: nowrap; max-width: calc(100% - 48px); overflow: hidden; text-overflow: ellipsis; transition: opacity .25s; }
+.toast a, .toast button { color: var(--acento-texto); font-weight: 600; background: none; border: 0; padding: 0; font: inherit; font-weight: 600; cursor: default; }
+.toast.saindo { opacity: 0; }
+
+/* ---------------------------------------------------------------- modo de gravação (D-24) */
+:root[data-gravacao] .painel.detalhe > .toolbar::after { content: "Modo de gravação ligado"; order: 99; margin-left: 8px; height: 18px; padding: 0 7px;
+  border-radius: var(--raio-pilula); background: var(--a-confirmar-fundo); color: var(--a-confirmar-texto); font: 600 .8462rem/18px var(--fonte); white-space: nowrap; }
+:root[data-gravacao] :is(.hi-it .nome, .hi-it .texto, .hi-nome, .hi-txt, .hi-quem, .zap-nome, .zap-previa, .zap-av, .zap-cab .t, .zap-quem, .zap-txt, .zap-citada, .zap-citando-txt, .zap-transcricao, .zap-anexo, .zap-ia-txt, .zap-confirma strong, .dm-it .l1 b, .dm-it .l2, .dm-titulo, .dm-det .resumo, .item .texto, .bl-nome, .fora-lista td:nth-child(2), .env-lotes td:nth-child(3), pre, .item-lista .nome, .item-lista .texto, .dm-nome, .citacao, .avatar, .zap-toolbar .nome, .zap-sub, .bolha .txt, .bl-nome, .ct-nome,
+  .ct-lista td > .meta-linha, .fr-item .texto, .fr-frentes td > .meta, .dm-mini, .toast > span) { filter: blur(6px); -webkit-user-select: none; user-select: none; }
+/* pedido 42: número do contato (Contatos), texto dos itens e resumo das frentes (vêm do WhatsApp), miniatura de imagem e
+   texto do toast (pode trazer o nome) entraram no borrão; nomes de frente ficam, são dele. */
+/* pedido 42 (complemento): mídia não se esconde com 6 px — foto, figurinha, miniatura de Demandas, vídeo e foto de perfil
+   levam borrão forte, sem cor viva, recortado na própria caixa (clip-path, senão o borrão vaza para fora da imagem) e sem
+   clique nem arraste (não abre nem copia o original enquanto grava). */
+:root[data-gravacao] :is(.zap-img, .dm-mini, video) { filter: blur(30px) saturate(.5); clip-path: inset(0 round 10px); pointer-events: none; -webkit-user-drag: none; }
+:root[data-gravacao] img.avatar { filter: blur(14px) saturate(.5); clip-path: inset(0 round 50%); pointer-events: none; -webkit-user-drag: none; }
+:root[data-gravacao] #zap-texto::placeholder { color: transparent; }
+
+@media (prefers-reduced-motion: reduce) { *, *::before, *::after { transition: none !important; animation: none !important; } }
+@media print { .lateral, .divisoria, .mostrar-lateral, .toolbar .acoes, .status, .toast { display: none !important; } body { height: auto; overflow: visible; } }
+</style>
+$preferencias_css
+</head>
+<body>
+<aside class="lateral" id="lateral">
+  <div class="marca"><svg class="nome" viewBox="40 -745 1735 975" role="img" aria-label="Greg"><path d="M236 9Q150 9 101 -58Q52 -126 52 -253Q52 -306 66 -370Q79 -434 106 -498Q134 -561 175 -614Q216 -666 272 -698Q328 -730 398 -730Q442 -730 473 -722Q504 -715 525 -703Q534 -698 531 -682L501 -530Q498 -513 485 -513Q473 -513 473 -526L472 -555Q469 -641 450 -672Q432 -704 393 -704Q347 -704 310 -679Q272 -654 242 -612Q211 -570 188 -519Q166 -468 152 -415Q137 -362 130 -315Q122 -268 122 -235Q122 -126 154 -72Q187 -17 239 -17Q271 -17 296 -36Q321 -54 332 -103L382 -322Q387 -342 384 -350Q380 -359 357 -361L322 -365Q309 -366 309 -376Q309 -388 327 -388H508Q521 -388 521 -378Q521 -367 506 -365L491 -363Q469 -360 462 -351Q456 -342 451 -321L393 -70Q391 -59 382 -49Q374 -39 356 -28Q331 -13 302 -2Q273 9 236 9ZM578 0Q564 0 567 -13L662 -412Q667 -434 664 -446Q660 -459 645 -459Q627 -459 606 -432Q584 -406 557 -332Q553 -319 543 -319Q528 -319 535 -337Q557 -406 582 -445Q606 -484 631 -500Q656 -516 677 -516Q710 -516 724 -492Q738 -467 725 -411L714 -364Q713 -357 717 -356Q721 -355 724 -361Q762 -448 793 -482Q824 -516 864 -516Q891 -516 904 -502Q918 -487 918 -462Q918 -437 906 -422Q894 -407 875 -407Q859 -407 852 -415Q845 -423 842 -434Q838 -444 834 -452Q830 -460 821 -460Q806 -460 782 -422Q758 -384 730 -320Q703 -255 678 -175Q652 -95 633 -11Q630 0 619 0ZM1011 9Q958 9 926 -32Q894 -74 894 -150Q894 -216 918 -281Q941 -346 979 -399Q1017 -452 1062 -484Q1108 -516 1151 -516Q1198 -516 1218 -494Q1239 -471 1239 -433Q1239 -388 1208 -344Q1176 -299 1120 -264Q1063 -229 987 -212Q965 -207 964 -187Q963 -180 963 -172Q963 -165 963 -158Q963 -101 982 -72Q1002 -43 1036 -43Q1074 -43 1110 -78Q1145 -113 1169 -177Q1172 -186 1181 -186Q1187 -186 1188 -181Q1190 -176 1188 -169Q1156 -81 1110 -36Q1065 9 1011 9ZM974 -250Q972 -243 976 -238Q981 -234 988 -236Q1050 -253 1092 -288Q1134 -322 1156 -365Q1177 -408 1177 -449Q1177 -491 1144 -491Q1115 -491 1081 -457Q1047 -423 1018 -368Q989 -313 974 -250ZM1323 216Q1244 216 1203 187Q1162 158 1162 118Q1162 83 1190 50Q1217 16 1291 -27Q1302 -33 1304 -40Q1305 -48 1294 -55Q1266 -73 1260 -97Q1255 -121 1273 -131L1349 -175Q1359 -180 1360 -188Q1360 -195 1349 -201Q1322 -217 1308 -246Q1295 -276 1295 -311Q1295 -365 1322 -412Q1348 -458 1392 -487Q1437 -516 1492 -516Q1515 -516 1531 -510Q1543 -506 1549 -518Q1566 -555 1592 -576Q1619 -598 1648 -598Q1669 -598 1680 -587Q1692 -576 1692 -557Q1692 -538 1681 -526Q1670 -514 1653 -514Q1640 -514 1634 -519Q1627 -524 1622 -529Q1617 -534 1606 -534Q1584 -534 1571 -509Q1567 -500 1569 -492Q1571 -485 1577 -477Q1603 -443 1603 -391Q1603 -344 1582 -302Q1562 -259 1526 -230Q1491 -200 1445 -190Q1427 -186 1412 -180Q1398 -175 1376 -161L1336 -137Q1321 -128 1328 -114Q1335 -101 1367 -89L1453 -57Q1509 -37 1530 -8Q1552 21 1552 60Q1552 108 1520 143Q1489 178 1437 197Q1385 216 1323 216ZM1362 -293Q1362 -247 1376 -226Q1389 -206 1414 -206Q1446 -206 1474 -236Q1501 -265 1518 -312Q1535 -358 1535 -408Q1535 -458 1522 -476Q1509 -495 1483 -495Q1452 -495 1424 -466Q1396 -436 1379 -390Q1362 -344 1362 -293ZM1334 191Q1373 191 1407 178Q1441 165 1462 141Q1484 117 1484 84Q1484 51 1468 30Q1451 8 1403 -10L1384 -17Q1366 -24 1348 -22Q1330 -20 1314 -12Q1260 18 1241 44Q1222 70 1222 101Q1222 138 1249 164Q1276 191 1334 191Z"/><path class="ponto" d="M1703 9Q1682 9 1669 -4Q1656 -18 1656 -38Q1656 -64 1674 -80Q1692 -96 1712 -96Q1732 -96 1746 -82Q1759 -69 1759 -49Q1759 -23 1741 -7Q1723 9 1703 9Z"/></svg><button type="button" class="lateral-ajustes lateral-gravar recolher vigia-lateral" title="Ocultar a lateral (⌃⌘S)" aria-label="Ocultar a lateral" aria-expanded="true" aria-controls="lateral"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="4.5" width="18" height="15" rx="3"/><path d="M9.5 4.5v15"/></svg></button></div>
+  <nav>$nav</nav>
+  $lateral
+  <div class="lateral-fim">
+    <div class="lateral-linha">$indicador$gravar$ajustes</div>
+    <form class="sair" method="post" action="/sair" id="form-sair"><button type="submit">Sair</button></form>
+  </div>
+</aside>
+<main>
+<div class="banner-offline" role="status">O painel não respondeu. Tentando de novo…</div>
+<div class="banner-avisos" id="faixa-avisos" role="status" aria-live="polite">$avisos</div>
+<button type="button" class="lateral-ajustes lateral-gravar mostrar-lateral vigia-lateral" title="Mostrar a lateral (⌃⌘S)" aria-label="Mostrar a lateral" aria-expanded="false" aria-controls="lateral"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="4.5" width="18" height="15" rx="3"/><path d="M9.5 4.5v15"/></svg></button>
+<div class="paineis"$paineis_attrs>
+$conteudo
+</div>
+$toast
+</main>
+<script>
+(function () {
+  var raiz = document.documentElement;
+  /* menus (<details class="menu">): um aberto por vez; fecham ao clicar fora, ao escolher um item direto e com Esc
+     (conteúdo aninhado, como os passos do menu da conversa, não fecha) */
+  function fechaMenus(exceto) { document.querySelectorAll('details.menu[open]').forEach(function (d) { if (d !== exceto) d.removeAttribute('open'); }); }
+  document.addEventListener('toggle', function (e) { if (e.target.matches && e.target.matches('details.menu') && e.target.open) fechaMenus(e.target); }, true);
+  document.addEventListener('click', function (e) {
+    var dentro = e.target.closest && e.target.closest('details.menu');
+    if (!dentro) { fechaMenus(null); return; }
+    if (e.target.closest('.menu-itens > a, .menu-itens > button')) setTimeout(function () { dentro.removeAttribute('open'); }, 0);
+  });
+  document.addEventListener('keydown', function (e) { if (e.key === 'Escape') fechaMenus(null); });
+  /* a única confirmação modal que sobra é a de ações que derrubam algo (Reiniciar Evolution…): o app mostra como NSAlert */
+  document.addEventListener('submit', function (e) {
+    var f = e.target, pergunta = f && f.getAttribute && f.getAttribute('data-confirmar');
+    if (pergunta && !window.confirm(pergunta)) e.preventDefault();
+  }, true);
+
+  /* toast: branco, sombra, 8 s, "Desfazer" em texto azul. Substitui os modais de confirmação. */
+  var temporizador = null;
+  function armaToast(el) { clearTimeout(temporizador); temporizador = setTimeout(function () { el.classList.add('saindo'); setTimeout(function () { el.remove(); }, 260); }, 8000); }
+  window.vigiaToast = function (texto, opcoes) {
+    opcoes = opcoes || {};
+    document.querySelectorAll('.toast').forEach(function (t) { t.remove(); });
+    var t = document.createElement('div'); t.className = 'toast'; t.setAttribute('role', 'status');
+    var s = document.createElement('span'); s.textContent = texto; t.appendChild(s);
+    if (opcoes.desfazer) { var b = document.createElement('button'); b.type = 'button'; b.textContent = opcoes.rotulo || 'Desfazer';
+      b.addEventListener('click', function () { t.remove(); opcoes.desfazer(); }); t.appendChild(b); }
+    document.querySelector('main').appendChild(t); armaToast(t); return t;
+  };
+  document.querySelectorAll('[data-toast]').forEach(armaToast);
+
+  /* pedido 63 (T1): todo fetch da página passa por aqui. Sem sessão o servidor responde 401 com X-Vigia-Sessao: caiu
+     (e nunca o 303 para o login, que o fetch seguiria e leria como sucesso).
+     pedido 83 (D-86): a tela não fica aberta com aviso; vai direto para o login, que devolve a esta página
+     (o servidor guardou o endereço no cookie vigia_volta ao responder o 401). */
+  window.vigiaSessaoCaiu = function (destino) {
+    if (raiz.hasAttribute('data-sessao-caiu')) return;
+    raiz.setAttribute('data-sessao-caiu', '1');
+    location.replace(destino === '/login?venceu=1' ? '/login?venceu=1' : '/login');
+  };
+  var fetchReal = window.fetch;
+  if (fetchReal) window.fetch = function () {
+    return fetchReal.apply(window, arguments).then(function (r) {
+      var caiu = false;
+      try { caiu = r.headers.get('X-Vigia-Sessao') === 'caiu' || (r.redirected && new URL(r.url).pathname === '/login'); } catch (e) {}
+      if (caiu) window.vigiaSessaoCaiu(r.status === 401 ? '/login?venceu=1' : '/login');
+      return r;
+    });
+  };
+
+  /* POST do próprio painel (fetch): o servidor responde JSON quando vê X-Vigia-Auto */
+  window.vigiaPost = function (url, corpo) {
+    return fetch(url, { method: 'POST', credentials: 'same-origin', headers: { 'X-Vigia-Auto': '1', 'Content-Type': 'application/x-www-form-urlencoded' },
+      body: new URLSearchParams(corpo || {}) }).then(function (r) {
+        window.vigiaOffline(false);
+        return r.text().then(function (txt) { var j = {}; try { j = txt ? JSON.parse(txt) : {}; } catch (e) { j = { erro: txt }; } j.status = r.status; j.ok = r.ok;
+          if (r.status === 401 && r.headers.get('X-Vigia-Sessao') === 'caiu') j.erro = 'Sua sessão terminou. Entre de novo.';
+          else if (r.redirected && new URL(r.url).pathname === '/login') { j.ok = false; j.status = 401; j.erro = 'Sua sessão terminou. Entre de novo.'; }
+          return j; });
+      }, function (e) { window.vigiaOffline(true); throw e; });
+  };
+  window.vigiaOffline = function (on) { if (on) raiz.setAttribute('data-offline', '1'); else raiz.removeAttribute('data-offline'); };
+
+  /* modo de gravação (D-24): ⌘⇧B, o interruptor de Ajustes ou o menu do app; estado só no localStorage */
+  var tituloReal = document.title;
+  function pintarGravacao(on) {
+    document.querySelectorAll('#vigia-gravar, .vigia-gravar').forEach(function (b) {
+      if (b.getAttribute('role') === 'switch') b.setAttribute('aria-checked', on ? 'true' : 'false');
+      b.setAttribute('aria-pressed', on ? 'true' : 'false');
+      b.title = (on ? 'Modo de gravação ligado' : 'Modo de gravação desligado') + ' (⌘⇧B)'; });
+    /* título da aba/janela também é dado: nome de conversa aberta vira só "Greg" enquanto grava (pedido 42) */
+    document.title = on ? 'Greg · modo de gravação' : tituloReal;
+  }
+  window.vigiaGravar = function (forcar) {
+    var on = (typeof forcar === 'boolean') ? forcar : !raiz.hasAttribute('data-gravacao');
+    if (on) raiz.setAttribute('data-gravacao', '1'); else raiz.removeAttribute('data-gravacao');
+    try { if (on) localStorage.setItem('vigia-gravacao', '1'); else localStorage.removeItem('vigia-gravacao'); } catch (e) {}
+    pintarGravacao(on);
+    if (typeof forcar !== 'boolean') window.vigiaToast(on ? 'Modo de gravação ligado. O que vem do WhatsApp fica borrado.' : 'Modo de gravação desligado.');
+    return on;
+  };
+  pintarGravacao(raiz.hasAttribute('data-gravacao'));
+  document.querySelectorAll('.vigia-gravar').forEach(function (b) { b.addEventListener('click', function () { window.vigiaGravar(); }); });
+
+  // Indicador da conexão e contador de Demandas ao vivo (pedido 43): GET /conexao/lateral a cada 30 s e ao voltar à aba,
+  // sem recarregar a página; falha de rede deixa como está.
+  function atualizarLateral() {
+    if (document.hidden) return;
+    fetch('/conexao/lateral', { credentials: 'same-origin', headers: { 'Accept': 'application/json' } })
+      .then(function (r) { return r.ok ? r.json() : null; })
+      .then(function (d) {
+        if (!d || typeof d.texto !== 'string') return;
+        var ind = document.querySelector('.conexao-estado');
+        if (ind) {
+          var ativo = ind.classList.contains('ativo');
+          ind.className = 'conexao-estado' + (d.classe ? ' ' + d.classe : '') + (ativo ? ' ativo' : '');
+          var rotulo = ind.querySelector('span:last-child');
+          if (rotulo) rotulo.textContent = d.texto;
+        }
+        var fx = document.getElementById('faixa-avisos');
+        if (fx && typeof d.avisos === 'string' && fx.innerHTML !== d.avisos) fx.innerHTML = d.avisos;
+        var dem = document.querySelector('.lateral nav a[href="/demandas"]');
+        if (dem) {
+          var n = dem.querySelector('.n');
+          if (d.demandas) {
+            if (!n) { n = document.createElement('span'); n.className = 'n'; dem.appendChild(n); }
+            n.textContent = d.demandas;
+          } else if (n) { n.remove(); }
+        }
+      })
+      .catch(function () {});
+  }
+  setInterval(atualizarLateral, 30000);
+  document.addEventListener('visibilitychange', function () { if (!document.hidden) atualizarLateral(); });
+
+  /* ações que o menu do app (Greg.app) e os atalhos do teclado disparam */
+  window.vigiaAtalho = function (nome) {
+    if (nome === 'gravar') { window.vigiaGravar(); return true; }
+    if (nome === 'buscar') { var b = document.querySelector('.campo.busca, input[type=search]'); if (b) { b.focus(); b.select(); return true; } return false; }
+    if (nome === 'desfazer') { return !!(window.vigiaDesfazer && window.vigiaDesfazer()); }
+    if (nome === 'sair') { var f = document.getElementById('form-sair'); if (f) f.submit(); return true; }
+    if (nome === 'pausar') {
+      window.vigiaPost('/conexao/pausar', {}).then(function (j) {
+        if (j.ok) window.vigiaToast(j.pausado ? 'Leituras pausadas. O monitor não lê até você retomar.' : 'Leituras retomadas.');
+        else window.vigiaToast('Não deu para pausar agora.');
+      }, function () { window.vigiaToast('O painel não respondeu.'); });
+      return true;
+    }
+    if (nome === 'nova') { location.href = '/conversas/nova'; return true; }
+    if (nome === 'lateral') { return !!(window.vigiaLateral && window.vigiaLateral()); }
+    return false;
+  };
+  var secoes = ['/demandas', '/conversas', '/frentes', '/envios', '/contatos', '/historico'];
+  document.addEventListener('keydown', function (e) {
+    var mod = e.metaKey || e.ctrlKey, campo = e.target && /^(INPUT|TEXTAREA|SELECT)$/.test(e.target.tagName) || (e.target && e.target.isContentEditable);
+    if (!mod) return;
+    if (e.metaKey && e.ctrlKey && !e.shiftKey && !e.altKey && (e.key === 's' || e.key === 'S')) { e.preventDefault(); window.vigiaAtalho('lateral'); return; }
+    if (e.shiftKey && !e.altKey && (e.key === 'B' || e.key === 'b')) { e.preventDefault(); window.vigiaGravar(); return; }
+    if (e.shiftKey && !e.altKey && (e.key === 'P' || e.key === 'p')) { e.preventDefault(); window.vigiaAtalho('pausar'); return; }
+    if (!e.shiftKey && !e.altKey && (e.key === 'f' || e.key === 'F')) { if (window.vigiaAtalho('buscar')) e.preventDefault(); return; }
+    if (!e.shiftKey && !e.altKey && (e.key === 'z' || e.key === 'Z') && !campo) { if (window.vigiaAtalho('desfazer')) e.preventDefault(); return; }
+    if (!e.shiftKey && !e.altKey && e.key === ',') { e.preventDefault(); location.href = '/ajustes'; return; }
+    if (!e.shiftKey && !e.altKey && e.key >= '1' && e.key <= '6') { e.preventDefault(); location.href = secoes[+e.key - 1]; }
+  });
+
+  /* Janela dividida (pedido 48, D-59): divisórias arrastáveis entre a lateral, a lista e o detalhe; lateral recolhível
+     (botão, ⌃⌘S, Enter na divisória ou arrastar até o fim); duplo clique na divisória volta ao padrão. As medidas vão
+     para dados/layout.json (POST /layout) e voltam como atributo no <html> e em .paineis, antes da primeira pintura. */
+  (function () {
+    var lateral = document.getElementById('lateral'), paineis = document.querySelector('.paineis');
+    if (!lateral || !paineis) return;
+    var pagina = paineis.getAttribute('data-pagina') || '';
+    /* Greg.app compilado antes do pedido 48: a alça nativa de arrastar a janela é fixa em 212 px */
+    var appAntigo = raiz.getAttribute('data-app') === 'mac' && !raiz.hasAttribute('data-alca');
+    var LAT_MIN = appAntigo ? 212 : 168, LAT_MAX = 360, LAT_SOME = 96, LISTA_MAX = 900, RESTO = 400, PASSO = 16;
+    function limita(v, min, max) { return Math.max(min, Math.min(Math.max(min, max), Math.round(v))); }
+    var fila = Promise.resolve();   /* uma gravação por vez, na ordem em que aconteceram */
+    function guardar(dados) { fila = fila.then(function () { return window.vigiaPost('/layout', dados); }).then(function () {}, function () {}); }
+    function recolhida() { return !appAntigo && raiz.getAttribute('data-lateral') === 'recolhida'; }
+    /* o app nativo ajusta a alça de arrastar a janela à largura da lateral (0 = recolhida: só a faixa do semáforo) */
+    function avisarApp() {
+      try { window.webkit.messageHandlers.vigia.postMessage({ acao: 'lateral', largura: recolhida() ? 0 : Math.round(lateral.getBoundingClientRect().width) }); } catch (e) {}
+    }
+    function pintar() {
+      var aberta = !recolhida();
+      document.querySelectorAll('.vigia-lateral').forEach(function (b) { b.setAttribute('aria-expanded', aberta ? 'true' : 'false'); });
+    }
+    /* mostrar: true abre, false recolhe, sem valor alterna. semGuardar: no meio de um arrasto (guarda ao soltar). */
+    window.vigiaLateral = function (mostrar, semGuardar) {
+      if (appAntigo) return false;
+      var abrir = (typeof mostrar === 'boolean') ? mostrar : recolhida();
+      if (abrir) raiz.removeAttribute('data-lateral'); else raiz.setAttribute('data-lateral', 'recolhida');
+      pintar(); avisarApp();
+      if (!semGuardar) {
+        guardar({ recolhida: abrir ? 0 : 1 });
+        var alvo = document.querySelector(abrir ? '.recolher' : '.mostrar-lateral');
+        if (alvo && document.activeElement && document.activeElement.closest('.vigia-lateral, .divisoria')) alvo.focus({ preventScroll: true });
+      }
+      return true;
+    };
+    document.querySelectorAll('.vigia-lateral').forEach(function (b) { b.addEventListener('click', function () { window.vigiaLateral(); }); });
+
+    function divisoria(rotulo, depois) {
+      var d = document.createElement('div');
+      d.className = 'divisoria'; d.tabIndex = 0;
+      d.setAttribute('role', 'separator'); d.setAttribute('aria-orientation', 'vertical'); d.setAttribute('aria-label', rotulo);
+      depois.insertAdjacentElement('afterend', d);
+      return d;
+    }
+    /* c: { largura() px atual · limites() [min, max] · mover(px) · soltar() guarda · padrao() duplo clique · inicio() e enter() opcionais } */
+    function arrastavel(d, c) {
+      var x0 = 0, w0 = 0, ativo = false, andou = false, espera = null;
+      function valor() {
+        var l = c.limites();
+        d.setAttribute('aria-valuemin', l[0]); d.setAttribute('aria-valuemax', Math.max(l[0], l[1])); d.setAttribute('aria-valuenow', Math.round(c.largura()));
+      }
+      d.addEventListener('pointerdown', function (e) {
+        if (e.button !== 0) return;
+        e.preventDefault(); ativo = true; andou = false; x0 = e.clientX; w0 = c.largura();
+        if (c.inicio) c.inicio();
+        try { d.setPointerCapture(e.pointerId); } catch (er) {}
+        raiz.setAttribute('data-arrastando', '1');
+      });
+      d.addEventListener('pointermove', function (e) { if (ativo && (andou || e.clientX !== x0)) { andou = true; c.mover(w0 + e.clientX - x0); } });
+      function solta() { if (!ativo) return; ativo = false; raiz.removeAttribute('data-arrastando'); if (andou) c.soltar(); valor(); }
+      d.addEventListener('pointerup', solta); d.addEventListener('pointercancel', solta);
+      d.addEventListener('dblclick', function () { c.padrao(); valor(); });
+      d.addEventListener('keydown', function (e) {
+        if (e.metaKey || e.ctrlKey || e.altKey) return;
+        var l = c.limites(), w = c.largura(), novo = null;
+        if (e.key === 'ArrowLeft') novo = w - (e.shiftKey ? 3 : 1) * PASSO;
+        else if (e.key === 'ArrowRight') novo = w + (e.shiftKey ? 3 : 1) * PASSO;
+        else if (e.key === 'Home') novo = l[0];
+        else if (e.key === 'End') novo = l[1];
+        else if (e.key === 'Enter' && c.enter) { e.preventDefault(); c.enter(); return; }
+        if (novo === null) return;
+        e.preventDefault(); c.mover(limita(novo, l[0], l[1])); valor();
+        clearTimeout(espera); espera = setTimeout(c.soltar, 500);
+      });
+      window.addEventListener('resize', valor);
+      valor();
+    }
+
+    var antes = '';   /* largura escolhida quando o arrasto começou ('' = automática) */
+    function escolhida() { return parseInt(raiz.style.getPropertyValue('--lateral'), 10) || 0; }
+    function repor(px) { if (px) raiz.style.setProperty('--lateral', px); else raiz.style.removeProperty('--lateral'); }
+    arrastavel(divisoria('Largura da lateral', lateral), {
+      inicio: function () { antes = raiz.style.getPropertyValue('--lateral'); },
+      largura: function () { return lateral.getBoundingClientRect().width; },
+      limites: function () { return [LAT_MIN, Math.min(LAT_MAX, window.innerWidth - 480)]; },
+      mover: function (px) {
+        /* arrastou até o fim: recolhe e devolve a largura de antes do arrasto, que é a que volta ao mostrar */
+        if (!appAntigo && px < LAT_SOME) { if (!recolhida()) { window.vigiaLateral(false, true); repor(antes); } return; }
+        if (recolhida()) window.vigiaLateral(true, true);
+        var l = this.limites(); raiz.style.setProperty('--lateral', limita(px, l[0], l[1]) + 'px');
+      },
+      soltar: function () { guardar({ lateral: escolhida(), recolhida: recolhida() ? 1 : 0 }); avisarApp(); },
+      padrao: function () { raiz.style.removeProperty('--lateral'); guardar({ lateral: 0 }); avisarApp(); },
+      enter: function () { window.vigiaLateral(); }
+    });
+    Array.prototype.slice.call(paineis.children).forEach(function (p) {
+      if (!p.classList.contains('painel') || !p.classList.contains('lista')) return;
+      var prox = p.nextElementSibling;   /* o painel seguinte, pulando <style>/<script> que a página tenha posto no meio */
+      while (prox && !prox.classList.contains('painel')) prox = prox.nextElementSibling;
+      if (!prox) return;
+      var posta = null;
+      arrastavel(divisoria('Largura da lista', p), {
+        largura: function () { return p.getBoundingClientRect().width; },
+        /* o mínimo vem do CSS (cresce com a lateral recolhida); o máximo deixa 400 px para o detalhe */
+        limites: function () { return [parseFloat(getComputedStyle(p).minWidth) || 240, Math.min(LISTA_MAX, paineis.clientWidth - RESTO)]; },
+        mover: function (px) {
+          var l = this.limites(); posta = limita(px, l[0], l[1]);
+          paineis.style.setProperty('--lista', posta + 'px'); paineis.style.setProperty('--lista-estreita', posta + 'px');
+        },
+        soltar: function () { if (pagina && posta !== null) guardar({ pagina: pagina, lista: posta }); },
+        padrao: function () {
+          posta = null; paineis.style.removeProperty('--lista'); paineis.style.removeProperty('--lista-estreita');
+          if (pagina) guardar({ pagina: pagina, lista: 0 });
+        }
+      });
+    });
+    pintar(); avisarApp();
+  })();
+})();
+</script>
+$roteiro
+</body>
+</html>

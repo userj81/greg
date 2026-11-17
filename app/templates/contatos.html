@@ -1,0 +1,73 @@
+<!-- fragmento: miolo do painel "Contatos" (estilo Papel); embrulhado por app/paginas/contatos.py. Pedido 34 (D-49). -->
+<style>
+.ct-avisos:not(:empty) { margin-bottom: 14px; display: flex; flex-direction: column; gap: 8px; }
+.ct-todas { margin-bottom: 14px; }
+.ct-lista th.fora-marca, .ct-lista td.fora-marca { width: 28px; padding-right: 0; }
+.ct-lista input[type=checkbox] { width: 16px; height: 16px; margin: 2px 0 0; accent-color: var(--acento); }
+.ct-lista tr[hidden] { display: none; }
+.ct-lista label { font-weight: 600; }
+.ct-lista td { overflow-wrap: anywhere; }
+.ct-frente { font-weight: 600; }
+.ct-sug.ct-fraca { color: var(--meta); }
+.ct-barra { flex: none; display: flex; align-items: center; gap: 8px; flex-wrap: wrap; padding: 8px 14px; border-top: 1px solid var(--fio); background: var(--fundo-2); }
+.ct-barra #fora-conta { color: var(--meta); font: var(--t-meta) var(--fonte); white-space: nowrap; }
+.ct-barra #fora-visiveis { margin-right: auto; }
+.ct-barra select.campo { max-width: 220px; }
+#fora-nada[hidden] { display: none; }
+</style>
+<div class="miolo largo">
+  <div class="ct-avisos">$aviso</div>
+  $confirmar_todas
+  $tabela
+</div>
+<form id="form-busca-ct" hidden></form>
+<script>
+(function () {
+  var form = document.getElementById('form-ct');
+  var todas = document.getElementById('ct-todas'), botaoTodas = document.getElementById('ct-todas-botao');
+  var armado = null;
+  function desarmar() { clearTimeout(armado); armado = null; if (botaoTodas) { botaoTodas.textContent = botaoTodas.getAttribute('data-rotulo'); } }
+  if (todas && botaoTodas) {
+    /* dois cliques no mesmo botão em vez de modal: o primeiro troca o rótulo pela pergunta, o segundo (em 6 s) confirma */
+    todas.addEventListener('submit', function (ev) {
+      if (armado) { desarmar(); return; }
+      ev.preventDefault();
+      botaoTodas.textContent = botaoTodas.getAttribute('data-confirma');
+      armado = setTimeout(desarmar, 6000);
+    });
+  }
+  if (!form) { return; }
+  var busca = document.getElementById('fora-busca');
+  var linhas = Array.prototype.slice.call(form.querySelectorAll('tbody tr'));
+  var vis = document.getElementById('fora-visiveis'), nada = document.getElementById('fora-nada');
+  var conta = document.getElementById('fora-conta'), acoes = document.querySelectorAll('.ct-acao');
+  function norm(s) { return (s || '').toLowerCase().normalize('NFD').replace(/\p{M}/gu, ''); }
+  function filtrar() {
+    var q = norm(busca ? busca.value : '').trim(), n = 0;
+    linhas.forEach(function (tr) {
+      var ok = !q || norm(tr.getAttribute('data-busca')).indexOf(q) >= 0;
+      tr.hidden = !ok;
+      if (ok) { n++; }
+    });
+    if (vis) { vis.textContent = n + ' de ' + linhas.length; }
+    if (nada) { nada.hidden = n > 0; }
+  }
+  function contar() {
+    var n = form.querySelectorAll('tbody input[type=checkbox]:checked').length;
+    acoes.forEach(function (b) { b.disabled = n === 0; });
+    if (conta) { conta.textContent = n === 0 ? 'Nenhum marcado' : n + (n === 1 ? ' marcado' : ' marcados'); }
+  }
+  var todos = document.getElementById('ct-todos');
+  if (todos) {
+    todos.addEventListener('click', function () {
+      linhas.forEach(function (tr) { if (!tr.hidden) { tr.querySelector('input[type=checkbox]').checked = true; } });
+      contar();
+    });
+  }
+  if (busca) { busca.addEventListener('input', filtrar); busca.closest('form') && busca.closest('form').addEventListener('submit', function (ev) { ev.preventDefault(); }); }
+  var formBusca = document.getElementById('form-busca-ct');
+  if (formBusca) { formBusca.addEventListener('submit', function (ev) { ev.preventDefault(); }); }
+  form.addEventListener('change', contar);
+  contar();
+})();
+</script>

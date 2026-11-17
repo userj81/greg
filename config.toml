@@ -1,0 +1,87 @@
+# Configuração do Greg do WhatsApp (lida com tomllib). Segredo NÃO entra aqui: fica no .env.
+# Costura do coordenador, congelada na F0 (CONTRATOS.md).
+
+# Pasta de dados (cursor, conexao.json, caixa/, vigia.db). O servidor preenche com caminho absoluto se ausente.
+# dados_dir = "/Users/<usuario>/vigia-whatsapp/dados"
+
+[contexto]
+# Janela de contexto por conversa: o MAIOR entre as últimas `horas` e as últimas `minimo` mensagens (D-5).
+horas = 48
+minimo = 30
+
+[qr]
+# Máquina de estado do QR (R-11, P-3): segundos de vida de cada QR, máximo por clique, teto diário (>= vira vermelho).
+segundos = 60
+maximo = 3
+teto_dia = 10
+# Janela (s) sem rodada anterior do monitor para tratar um reason_code 428 como recente [60,3600].
+janela_428_s = 600
+
+[grupos]
+# Lista branca de grupos (remoteJid terminado em @g.us). Vazia = nenhum grupo é lido (D-10).
+permitidos = []
+
+[leitura]
+# F7 do estudo (D-49): conversas do SISTEMA que a IA não lê (continuam no painel). Hoje: o bot da agência que manda os
+# avisos do próprio Greg ("a conexão caiu"). Não é bloqueio: nada é apagado.
+# O jid real do bot é dado pessoal e não entra no git: vai em VIGIA_CONVERSAS_DO_SISTEMA no .env (vírgula separa),
+# somado a esta lista pelo coletor (pedido 37).
+conversas_do_sistema = []
+
+[conversas]
+# r02 (D-39): grupos aparecem na tela de Conversas, então a Evolution guarda as mensagens de grupo (groupsIgnore=false,
+# aplicado por `bin/evolution.sh instancia`). A IA continua lendo SÓ os grupos de [grupos].permitidos.
+# false = a Evolution volta a descartar mensagem de grupo, como na r01.
+grupos = true
+
+[midia]
+# Imagens: teto por ciclo, pausa entre downloads em segundos (D-6, P-3).
+teto_ciclo = 20
+pausa_s = 1.0
+
+[transcricao]
+# Pedido 30 (D-47): todo áudio que chega vira texto por um motor LOCAL (mlx_whisper + whisper-large-v3-turbo, já no Mac,
+# modo offline: nada sai da máquina). Roda dentro do ciclo de 30 min, UM processo por vez com `nice`, e o texto entra
+# na linha do lote (`[áudio 0:40] transcrição automática: "…"`) e abaixo do player na conversa aberta.
+# A limpeza semanal apaga as transcrições junto com o cru. Áudio de grupo é transcrito mesmo que a IA não leia o grupo.
+ativo = true
+grupos = true
+teto_ciclo = 20               # áudios por ciclo (o resto espera o próximo)
+teto_segundos_ciclo = 900     # soma de áudio ouvido por ciclo (15 min ≈ 1 min de motor)
+max_segundos_audio = 600      # áudio mais longo: só os primeiros 10 min (marcado como cortado)
+min_segundos = 2              # mais curto que isso não vale o motor
+timeout_s = 600               # por processo do motor
+tentativas = 3                # falhas por áudio antes de desistir
+modelo = "mlx-community/whisper-large-v3-turbo"
+idioma = "pt"
+nice = 15
+
+[horarios]
+# Fechamento diário e semanal (R-12). Formato "HH:MM" e "dia HH:MM".
+# diario (D-57, pedido 45): hora em que os cartões provisórios do dia (atenção/demanda/lembrar sem item) são consolidados
+# e sobem ao Frentes (bin/fechar-dia.py, chamado pelo ciclo de 30 min). Cartão criado depois dessa hora é do dia seguinte.
+diario = "21:00"
+semanal = "dom 20:00"
+
+[envio]
+# API local de envio (pedido 10, R-15, D-44): tetos conferidos no servidor e pausa aleatória entre envios da fila.
+# "conhecido" = já conversou com você desde o pareamento, grupo ou contato com apelido salvo; "novo" = nunca conversou.
+teto_lote = 20
+teto_dia_conhecidos = 30
+teto_dia_novos = 10
+intervalo_s = [45, 90]
+intervalo_novos_s = [90, 180]
+
+[ia]
+# Pedido 68: quem lê as conversas. "claude-code" (padrão) = o Claude Code deste Mac, como sempre.
+# "api" = outra IA pelo protocolo de conversa da OpenAI: OpenRouter, outro provedor compatível ou modelo local (Ollama,
+# LM Studio). A escolha feita em Ajustes (seção IA) fica em dados/ia.json e vence o que estiver aqui.
+# A chave NÃO entra neste arquivo: é colada em Ajustes e vai para o Keychain (ou dados/.env.ia, 0600).
+motor = "claude-code"
+# endereco = "https://openrouter.ai/api/v1"     # local: "http://localhost:11434/v1" (sem chave, sem custo)
+# modelo = ""
+# teto_mes_usd = 5.0                  # gasto máximo por mês (editável em Ajustes); ao atingir, a leitura para
+#                                     # até o teto aumentar ou o mês virar
+# preco_entrada_usd_milhao = 3.0      # usados quando a resposta do provedor não informa o custo
+# preco_saida_usd_milhao = 15.0
+# visao = true                        # false: o modelo não lê imagem (ela vai marcada "não lida")

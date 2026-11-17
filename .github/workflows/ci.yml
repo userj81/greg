@@ -1,0 +1,36 @@
+name: ci
+on:
+  push:
+    branches: [main]
+  pull_request:
+permissions:
+  contents: read
+jobs:
+  testes:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.14"
+      - name: compila
+        run: python -m compileall -q app bin testes
+      - name: testes
+        run: python -W ignore -m unittest discover -s testes -t .
+  compose:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+      - name: compose válido
+        run: |
+          printf 'EVOLUTION_GLOBAL_KEY=x\nPOSTGRES_PASSWORD=x\nVIGIA_RO_PASSWORD=x\nVIGIA_LIMPEZA_PASSWORD=x\nVIGIA_TOKEN=x\n' > docker.env
+          docker compose config -q
+  segredos:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: gitleaks/gitleaks-action@v2
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

@@ -1,0 +1,17 @@
+.git
+.githooks
+.claude
+.env
+.env.*
+docker.env
+infra/.env.compose
+dados/
+dist/
+docs/
+testes/
+macapp/
+site/
+**/__pycache__
+*.pyc
+*.db*
+*.log

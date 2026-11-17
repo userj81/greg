@@ -1,0 +1,101 @@
+#!/opt/homebrew/bin/python3
+"""Ponte do Claude agendado: classificar | atualizar | frentes. Saída JSON em stdout; exit 0 ok, 1 erro.
+Quem chama: o `claude -p` do coletor (Bash(vigia-ponte:*)). Descobre comandos em app/ponte/<comando>.py.
+O que não faz: não lê o token de envio, não toca Evolution, não imprime token nem texto de mensagem.
+"""
+import argparse
+import importlib
+import json
+import os
+import sys
+import tomllib
+from pathlib import Path
+
+RAIZ = Path(__file__).resolve().parents[1]
+sys.path.insert(0, str(RAIZ))
+
+from app import segredos  # noqa: E402
+from app.conexao import dados_dir  # noqa: E402
+from app.erros import VigiaErro  # noqa: E402
+
+CHAVES_ENV = ("FRENTES_URL", "FRENTES_TOKEN")
+
+
+def carregar_env() -> dict:
+    """Lê só as chaves da lista branca; o ambiente vence o arquivo. Variável de envio é descartada do ambiente."""
+    for k in [k for k in os.environ if "ENVIO" in k]:
+        os.environ.pop(k, None)
+    valores = {}
+    arq = RAIZ / ".env"
+    if arq.exists():
+        for linha in arq.read_text(encoding="utf-8").splitlines():
+            linha = linha.strip()
+            if not linha or linha.startswith("#") or "=" not in linha:
+                continue
+            k, v = linha.split("=", 1)
+            k = k.strip()
+            if k in CHAVES_ENV:   # B5: mesma regra do vigia.sh/coletor: comentário no fim da linha e aspas saem
+                valores[k] = v.split(" #", 1)[0].split("\t#", 1)[0].strip().strip('"').strip("'")
+    for k in CHAVES_ENV:
+        if os.environ.get(k):
+            valores[k] = os.environ[k]
+    return valores
+
+
+def _config() -> dict:
+    try:
+        return tomllib.loads((RAIZ / "config.toml").read_text(encoding="utf-8"))
+    except (OSError, ValueError):
+        return {}
+
+
+def comandos() -> list[str]:
+    return sorted(p.stem for p in (RAIZ / "app" / "ponte").glob("*.py") if not p.name.startswith("_"))
+
+
+class Parser(argparse.ArgumentParser):
+    def error(self, mensagem):
+        raise ValueError("argumentos inválidos")  # argparse ecoaria o argumento (pode ser texto de mensagem)
+
+
+def montar_parser():
+    parser = Parser(prog="vigia-ponte", description="Ponte do Greg com o Frentes (saída JSON, exit 0/1).")
+    sub = parser.add_subparsers(dest="comando", parser_class=Parser)
+    mods = {}
+    for nome in comandos():
+        mod = importlib.import_module(f"app.ponte.{nome}")
+        if hasattr(mod, "configurar") and hasattr(mod, "executar"):
+            mod.configurar(sub)
+            mods[nome] = mod
+    return parser, mods
+
+
+def saida(obj, codigo):
+    print(json.dumps(obj, ensure_ascii=False))
+    return codigo
+
+
+def main(argv=None) -> int:
+    parser, mods = montar_parser()
+    try:
+        args = parser.parse_args(argv)
+        if args.comando is None:
+            parser.print_help()
+            return 0
+        from app.banco import Banco
+        from app.frentes_ponte import criar_ponte
+        env = segredos.completar(carregar_env(), ("FRENTES_TOKEN",))  # D-45: Keychain opt-in (desligado); se ligado, só esta chave
+        banco = Banco(os.environ.get("VIGIA_PONTE_DB") or str(dados_dir(RAIZ, _config()) / "vigia.db"))
+        ponte = criar_ponte(env.get("FRENTES_URL"), env.get("FRENTES_TOKEN", ""), dados_dir(RAIZ, _config()),
+                            padrao_url="http://127.0.0.1:8110")
+        return saida(mods[args.comando].executar(args, banco=banco, ponte=ponte), 0)
+    except VigiaErro as e:
+        return saida({"ok": False, "erro": f"{type(e).__name__}: {e}"}, 1)
+    except ValueError as e:
+        return saida({"ok": False, "erro": str(e)}, 1)
+    except Exception as e:  # nunca vaza traceback com dados
+        return saida({"ok": False, "erro": f"falha inesperada ({type(e).__name__})"}, 1)
+
+
+if __name__ == "__main__":
+    sys.exit(main())

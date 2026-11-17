@@ -1,0 +1,21 @@
+<!-- fragmento: miolo do painel "Métricas" (estilo Papel); embrulhado por app/paginas/metricas.py. Fase A (D-45). -->
+<style>
+.mt .kv { margin-bottom: 4px; }
+.mt .tabela th, .mt .tabela td { white-space: nowrap; }
+.mt .tabela td:first-child { color: var(--meta); }
+.mt table.matriz th, .mt table.matriz td { text-align: center; }
+.mt table.matriz th:first-child, .mt table.matriz td:first-child { text-align: left; color: var(--texto); }
+.mt table.matriz td.ok { color: var(--ok); font-weight: 600; }
+.mt .legenda { margin-bottom: 8px; }
+.mt .vazio { padding: 28px 0; }
+</style>
+<div class="miolo largo mt">
+  <p class="rotulo">Resumo</p>
+  $kv
+  <p class="rotulo">Precisão: previsto por rotulado</p>
+  $matriz
+  <p class="rotulo">Ciclos por dia</p>
+  $tabela_dias
+  <p class="rotulo">Quedas e voltas da conexão</p>
+  $eventos
+</div>

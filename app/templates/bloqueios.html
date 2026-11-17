@@ -1,0 +1,62 @@
+<!-- fragmento: corpo do painel "Fora do Greg" (estilo Papel); embrulhado por app/paginas/bloqueios.py. Pedido 29 (D-46). -->
+<style>
+.fora-avisos:not(:empty) { margin-bottom: 14px; }
+.fora-lista th.fora-marca, .fora-lista td.fora-marca { width: 28px; padding-right: 0; }
+.fora-lista input[type=checkbox] { width: 16px; height: 16px; margin: 2px 0 0; accent-color: var(--acento); }
+.fora-lista tr[hidden] { display: none; }
+.fora-lista label { font-weight: 600; }
+.fora-rodape { display: flex; gap: 12px; align-items: center; flex-wrap: wrap; margin-top: 14px; }
+.fora-rodape #fora-visiveis { margin-left: auto; }
+.fora .bl-linhas { margin-bottom: 4px; }
+.fora .bl-linha { display: flex; align-items: center; gap: 10px; padding: 6px 0; border-top: 1px solid var(--fio-fraco); }
+.fora .bl-linha:first-child { border-top: 0; }
+.fora .bl-linha .bl-nome { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.fora .bl-vazio { color: var(--meta); }
+.fora .vazio { padding: 32px 0; }
+</style>
+<div class="miolo">
+  <div class="fora-avisos">$aviso</div>
+  <p class="rotulo">Fora agora ($n_fora)</p>
+  <div id="fora-agora">$fora</div>
+  <p class="rotulo">Escolher quem fica fora</p>
+  <div id="escolher">$tabela</div>
+</div>
+<script>
+(function () {
+  var form = document.getElementById('form-fora');
+  var busca = document.getElementById('fora-busca');
+  if (!form || !busca) { return; }
+  var linhas = Array.prototype.slice.call(form.querySelectorAll('tbody tr'));
+  var vis = document.getElementById('fora-visiveis'), nada = document.getElementById('fora-nada');
+  var botao = document.getElementById('fora-botao'), conta = document.getElementById('fora-conta');
+  function norm(s) { return (s || '').toLowerCase().normalize('NFD').replace(/\p{M}/gu, ''); }
+  function filtrar() {
+    var q = norm(busca.value).trim(), n = 0;
+    linhas.forEach(function (tr) {
+      var ok = !q || norm(tr.getAttribute('data-busca')).indexOf(q) >= 0;
+      tr.hidden = !ok;
+      if (ok) { n++; }
+    });
+    vis.textContent = n + ' de ' + linhas.length;
+    nada.hidden = n > 0;
+  }
+  var armado = null;
+  function desarmar() { clearTimeout(armado); armado = null; botao.textContent = botao.getAttribute('data-rotulo'); }
+  function contar() {
+    var n = form.querySelectorAll('input[type=checkbox]:checked').length;
+    botao.disabled = n === 0;
+    conta.textContent = n === 0 ? 'Nenhum marcado' : n + ' marcado(s)';
+    desarmar();
+  }
+  /* dois cliques no mesmo botão em vez de modal: o primeiro troca o rótulo pela pergunta, o segundo (em 6 s) confirma */
+  form.addEventListener('submit', function (ev) {
+    if (armado) { desarmar(); return; }
+    ev.preventDefault();
+    botao.textContent = botao.getAttribute('data-confirma');
+    armado = setTimeout(desarmar, 6000);
+  });
+  busca.addEventListener('input', filtrar);
+  form.addEventListener('change', contar);
+  contar();
+})();
+</script>

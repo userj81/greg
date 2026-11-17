@@ -1,0 +1,51 @@
+# segredos
+.env
+.env.*
+!.env.exemplo
+!infra/.env.compose.exemplo
+credenciais/
+*.pem
+*.key
+
+# dado cru de conversa — NUNCA no git
+dados/
+*.db
+*.db-wal
+*.db-shm
+*.sqlite*
+*.log
+logs/
+
+# ambiente
+__pycache__/
+*.pyc
+.venv/
+venv/
+.DS_Store
+.claude/
+*.bak
+*.bak-*
+testes/tmp/
+
+# segredos do compose
+infra/.env.compose
+dados/cursor.lock
+
+# Vigia.app compilado (bin/construir-app.sh)
+dist/
+docs/design/ds03/telas/
+docs/design/ds04/telas/
+
+# Docker (bin/preparar-docker.sh)
+docker.env
+
+# filme de produto: vídeos e áudio gerados (refazer com criativos/bin/montar.sh)
+criativos/out/
+criativos/audio/*.wav
+# teaser: clipes de IA, quadros extraídos deles e imagens em PNG cheio (as provas em JPEG ficam)
+criativos/ia-video/clipes/
+# material do dono (mp4, mp3 e folhas em PNG) dos filmes do áudio de 7 min e dos cartões: fica só no Mac
+criativos/ia-video/audio-7min/
+criativos/ia-video/cartoes/
+criativos/src/quadros/
+criativos/direcao/img/

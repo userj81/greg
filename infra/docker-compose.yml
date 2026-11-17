@@ -1,0 +1,103 @@
+# Evolution API v2.3.7 + Postgres 16 + Redis 7 do Greg WhatsApp (só no Mac, só em 127.0.0.1).
+# Quem chama: bin/evolution.sh (docker compose --env-file infra/.env.compose).
+# O que não faz: não publica porta do redis nem do Postgres (acesso ao banco: docker exec e a rede interna do
+# compose); não guarda segredo (tudo vem de variáveis do .env.compose).
+name: vigia-whatsapp
+
+services:
+  api:
+    image: evoapicloud/evolution-api:v2.3.7
+    restart: unless-stopped
+    depends_on:
+      db:
+        condition: service_healthy
+      redis:
+        condition: service_started
+    ports:
+      - "127.0.0.1:${EVOLUTION_PORTA_HOST:-8080}:8080"
+    environment:
+      SERVER_URL: "http://127.0.0.1:8080"
+      AUTHENTICATION_API_KEY: "${EVOLUTION_GLOBAL_KEY}"
+      DATABASE_ENABLED: "true"
+      DATABASE_PROVIDER: "postgresql"
+      DATABASE_CONNECTION_URI: "postgresql://evolution:${POSTGRES_PASSWORD}@db:5432/evolution"
+      DATABASE_SAVE_DATA_INSTANCE: "true"
+      DATABASE_SAVE_DATA_NEW_MESSAGE: "true"
+      DATABASE_SAVE_MESSAGE_UPDATE: "true"    # pedido 51: o status da mensagem própria só passa por MessageUpdate (infra/sql/005)
+      DATABASE_SAVE_DATA_CONTACTS: "true"
+      DATABASE_SAVE_DATA_CHATS: "false"
+      DATABASE_SAVE_DATA_LABELS: "false"
+      DATABASE_SAVE_DATA_HISTORIC: "true"   # D-53 (pedido 43): grava o histórico que o WhatsApp manda no pareamento; o Greg lê só pareado_em − 1 dia
+      CACHE_REDIS_ENABLED: "true"
+      CACHE_REDIS_URI: "redis://redis:6379/0"
+      LOG_LEVEL: "ERROR"
+      LOG_BAILEYS: "error"
+      CONFIG_SESSION_PHONE_CLIENT: "Greg"
+      CONFIG_SESSION_PHONE_NAME: "Chrome"
+      WEBHOOK_GLOBAL_ENABLED: "false"
+      WEBSOCKET_ENABLED: "false"
+      RABBITMQ_ENABLED: "false"
+      SQS_ENABLED: "false"
+      CHATWOOT_ENABLED: "false"
+      TYPEBOT_ENABLED: "false"
+      OPENAI_ENABLED: "false"
+      S3_ENABLED: "false"
+      DEL_INSTANCE: "false"
+      QRCODE_LIMIT: "3"
+      TELEMETRY_ENABLED: "false"
+      TELEMETRY_URL: ""
+      AUTHENTICATION_EXPOSE_IN_FETCH_INSTANCES: "false"
+      CORS_ORIGIN: "*"   # D-35: Evolution recusa chamada sem Origin se restrito; proteção real = bind 127.0.0.1 + apikey
+    volumes:
+      - evolution_instances:/evolution/instances
+      # D-55 (pedido 44): o Baileys 7.0.0-rc.9 que a v2.3.7 traz não confirma a stanza <status>; o WhatsApp fecha o
+      # stream a cada ~50 min e retém as mensagens novas. Cópia corrigida por cima do arquivo da imagem
+      # (ver infra/patches/README.md). Ao trocar a tag da imagem, rever: imagem com Baileys corrigido dispensa esta
+      # linha, e ela sobrescreveria o arquivo novo com o antigo.
+      - ./patches/baileys-messages-recv.js:/evolution/node_modules/baileys/lib/Socket/messages-recv.js:ro
+      # D-65 (pedido 54): puxar a agenda inteira sem novo pareamento (bin/evolution.sh puxar-agenda). Mesma regra do
+      # remendo de cima ao trocar a tag da imagem (ver infra/patches/README.md).
+      - ./patches/baileys-chats.js:/evolution/node_modules/baileys/lib/Socket/chats.js:ro
+    deploy:
+      resources:
+        limits:
+          cpus: "1.0"
+          memory: 1G
+
+  db:
+    image: postgres:16-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: "evolution"
+      POSTGRES_PASSWORD: "${POSTGRES_PASSWORD}"
+      POSTGRES_DB: "evolution"
+    volumes:
+      - evolution_pg:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U evolution -d evolution"]
+      interval: 5s
+      timeout: 5s
+      retries: 20
+    deploy:
+      resources:
+        limits:
+          cpus: "0.5"
+          memory: 512M
+
+  redis:
+    image: redis:7-alpine
+    restart: unless-stopped
+    # AOF: as chaves Signal vivem no Redis (v2); perder o volume = re-parear (gasta QR).
+    command: ["redis-server", "--appendonly", "yes"]
+    volumes:
+      - evolution_redis:/data
+    deploy:
+      resources:
+        limits:
+          cpus: "0.3"
+          memory: 256M
+
+volumes:
+  evolution_instances:
+  evolution_pg:
+  evolution_redis:
